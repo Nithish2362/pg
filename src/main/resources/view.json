@@ -1,0 +1,83 @@
+[
+  {
+    "id": "1",
+    "name": "Dashboard",
+    "parent_id": null,
+    "orderBy": 1,
+    "path": "/dashboard",
+    "icon": "dashboard",
+    "defaultChildId": ""
+  },
+  {
+    "id": "2",
+    "name": "Property",
+    "parent_id": null,
+    "orderBy": 2,
+    "path": "/locations",
+    "icon": "apartment",
+    "defaultChildId": "21"
+  },
+  {
+    "id": "3",
+    "name": "Residents",
+    "parent_id": null,
+    "orderBy": 3,
+    "path": "/tenants",
+    "icon": "groups",
+    "defaultChildId": "31"
+  },
+  {
+    "id": "21",
+    "name": "Locations",
+    "parent_id": "2",
+    "orderBy": 1,
+    "path": "/locations",
+    "icon": "",
+    "defaultChildId": ""
+  },
+  {
+    "id": "22",
+    "name": "Buildings",
+    "parent_id": "2",
+    "orderBy": 2,
+    "path": "/buildings",
+    "icon": "",
+    "defaultChildId": ""
+  },
+  {
+    "id": "23",
+    "name": "Floors",
+    "parent_id": "2",
+    "orderBy": 3,
+    "path": "/floors",
+    "icon": "",
+    "defaultChildId": ""
+  },
+  {
+    "id": "24",
+    "name": "Rooms",
+    "parent_id": "2",
+    "orderBy": 4,
+    "path": "/rooms",
+    "icon": "",
+    "defaultChildId": ""
+  },
+  {
+    "id": "31",
+    "name": "Tenants",
+    "parent_id": "3",
+    "orderBy": 1,
+    "path": "/tenants",
+    "icon": "",
+    "defaultChildId": ""
+  },
+  {
+    "id": "32",
+    "name": "Payments",
+    "parent_id": "3",
+    "orderBy": 2,
+    "path": "/payments",
+    "icon": "",
+    "defaultChildId": ""
+  }
+]
