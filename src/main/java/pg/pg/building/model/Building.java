@@ -18,6 +18,9 @@ public class Building {
     @Column(nullable = false)
     private String buildingName;
 
+    @Column(nullable = false)
+    private String buildingNumber;
+
     @ManyToOne
     @JoinColumn(name = "location_id", nullable = false)
     @JsonIgnore
@@ -34,7 +37,13 @@ public class Building {
     @PrePersist
     public void prePersist() {
         if (id == null || id.isBlank()) {
-            id = PrefixedUuidGenerator.generate("BLD");
+            id = java.util.UUID.randomUUID().toString();
+        }
+        if (buildingNumber == null || buildingNumber.isBlank()) {
+            pg.pg.prefix.service.PrefixService prefixService = pg.pg.common.util.ApplicationContextUtils.getBean(pg.pg.prefix.service.PrefixService.class);
+            if (prefixService != null) {
+                buildingNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(pg.pg.common.util.PrefixType.BUILDING, "BLD");
+            }
         }
     }
 
@@ -43,6 +52,9 @@ public class Building {
 
     public String getBuildingName() { return buildingName; }
     public void setBuildingName(String buildingName) { this.buildingName = buildingName; }
+
+    public String getBuildingNumber() { return buildingNumber; }
+    public void setBuildingNumber(String buildingNumber) { this.buildingNumber = buildingNumber; }
 
     public Location getLocation() { return location; }
     public void setLocation(Location location) { this.location = location; }

@@ -31,7 +31,13 @@ public class Bed {
     @PrePersist
     public void prePersist() {
         if (id == null || id.isBlank()) {
-            id = PrefixedUuidGenerator.generate("BED");
+            id = java.util.UUID.randomUUID().toString();
+        }
+        if (bedNumber == null || bedNumber.isBlank()) {
+            pg.pg.prefix.service.PrefixService prefixService = pg.pg.common.util.ApplicationContextUtils.getBean(pg.pg.prefix.service.PrefixService.class);
+            if (prefixService != null) {
+                bedNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(pg.pg.common.util.PrefixType.BED, "BED");
+            }
         }
     }
 

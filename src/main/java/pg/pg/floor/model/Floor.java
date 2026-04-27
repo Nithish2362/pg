@@ -16,7 +16,7 @@ public class Floor {
     private String id;
 
     @Column(nullable = false)
-    private Integer floorNumber;
+    private String floorNumber;
 
     @Column(nullable = false)
     private String floorName;
@@ -37,15 +37,21 @@ public class Floor {
     @PrePersist
     public void prePersist() {
         if (id == null || id.isBlank()) {
-            id = PrefixedUuidGenerator.generate("FLR");
+            id = java.util.UUID.randomUUID().toString();
+        }
+        if (floorNumber == null || floorNumber.isBlank()) {
+            pg.pg.prefix.service.PrefixService prefixService = pg.pg.common.util.ApplicationContextUtils.getBean(pg.pg.prefix.service.PrefixService.class);
+            if (prefixService != null) {
+                floorNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(pg.pg.common.util.PrefixType.FLOOR, "FLR");
+            }
         }
     }
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
-    public Integer getFloorNumber() { return floorNumber; }
-    public void setFloorNumber(Integer floorNumber) { this.floorNumber = floorNumber; }
+    public String getFloorNumber() { return floorNumber; }
+    public void setFloorNumber(String floorNumber) { this.floorNumber = floorNumber; }
 
     public String getFloorName() { return floorName; }
     public void setFloorName(String floorName) { this.floorName = floorName; }

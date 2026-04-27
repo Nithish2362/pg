@@ -46,7 +46,13 @@ public class Room {
     @PrePersist
     public void prePersist() {
         if (id == null || id.isBlank()) {
-            id = PrefixedUuidGenerator.generate("ROM");
+            id = java.util.UUID.randomUUID().toString();
+        }
+        if (roomNumber == null || roomNumber.isBlank()) {
+            pg.pg.prefix.service.PrefixService prefixService = pg.pg.common.util.ApplicationContextUtils.getBean(pg.pg.prefix.service.PrefixService.class);
+            if (prefixService != null) {
+                roomNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(pg.pg.common.util.PrefixType.ROOM, "ROM");
+            }
         }
     }
 

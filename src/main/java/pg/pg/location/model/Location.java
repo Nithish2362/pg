@@ -16,6 +16,9 @@ public class Location {
     @Column(nullable = false)
     private String locationName;
 
+    @Column(nullable = false)
+    private String locationNumber;
+
     @Column
     private String address;
 
@@ -30,7 +33,13 @@ public class Location {
     @PrePersist
     public void prePersist() {
         if (id == null || id.isBlank()) {
-            id = PrefixedUuidGenerator.generate("LOC");
+            id = java.util.UUID.randomUUID().toString();
+        }
+        if (locationNumber == null || locationNumber.isBlank()) {
+            pg.pg.prefix.service.PrefixService prefixService = pg.pg.common.util.ApplicationContextUtils.getBean(pg.pg.prefix.service.PrefixService.class);
+            if (prefixService != null) {
+                locationNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(pg.pg.common.util.PrefixType.LOCATION, "LOC");
+            }
         }
     }
 
@@ -39,6 +48,9 @@ public class Location {
 
     public String getLocationName() { return locationName; }
     public void setLocationName(String locationName) { this.locationName = locationName; }
+
+    public String getLocationNumber() { return locationNumber; }
+    public void setLocationNumber(String locationNumber) { this.locationNumber = locationNumber; }
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
