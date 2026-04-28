@@ -1,38 +1,65 @@
 package pg.pg.location.service.implementation;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import pg.pg.location.Dto.LocationDto;
 import pg.pg.location.model.Location;
 import pg.pg.location.repository.LocationRepository;
 import pg.pg.location.service.LocationService;
+import pg.pg.prefix.service.PrefixService;
+import pg.pg.utils.Types;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class LocationServiceImpl implements LocationService {
 
-    @Autowired
-    private LocationRepository locationRepository;
+    private final LocationRepository locationRepository;
+    private final PrefixService prefixService;
+    private final ObjectMapper objectMapper;
 
     @Override
-    public List<Location> getAll() { return locationRepository.findAll(); }
-    
-    @Override
-    public Optional<Location> getById(String id) { return locationRepository.findById(id); }
+    public LocationDto createLocation(LocationDto locationDto) {
+        Location location = locationDto.toLocation();
 
-    @Override
-    public Location create(Location location) { return locationRepository.save(location); }
+        if (!StringUtils.hasText(location.getLocationId())) {
+            location.setLocationId(
+                    prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.LOCATION, "LOC")
+            );
+        } else {
+            Location existing = locationRepository.findByLocationId(location.getLocationId())
+                    .orElseThrow(() -> new RuntimeException("Location not found"));
+            location.setId(existing.getId());
+        }
 
-    @Override
-    public Location update(String id, Location details) {
-        Location loc = locationRepository.findById(id).orElseThrow(() -> new RuntimeException("Location not found"));
-        loc.setLocationName(details.getLocationName());
-        loc.setAddress(details.getAddress());
-        loc.setCity(details.getCity());
-        return locationRepository.save(loc);
+        Location saved = locationRepository.save(location);
+        return saved.toLocationDto();
     }
 
     @Override
-    public void delete(String id) { locationRepository.deleteById(id); }
+    public List<LocationDto> getAllLocations() {
+        return locationRepository.findAll()
+                .stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<Location> getAllPaginatedLocations(String searchTerm, Types.Status status, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page, pageSize);
+        return locationRepository.findByStatusAndSearch(status, searchTerm, pageable);
+    }
+
+    private LocationDto convertToDto(Location location) {
+        return objectMapper.convertValue(location, LocationDto.class);
+    }
 }

@@ -1,63 +1,52 @@
 package pg.pg.location.model;
 
 import jakarta.persistence.*;
-import pg.pg.common.util.PrefixedUuidGenerator;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+import pg.pg.location.Dto.LocationDto;     // Fixed package name (dto lowercase)
 import pg.pg.building.model.Building;
+import pg.pg.utils.BaseModel;                 // Assuming this is your BaseModel
 
 import java.util.List;
 
 @Entity
 @Table(name = "locations")
-public class Location {
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+public class Location extends BaseModel {
 
-    @Id
-    private String id;
+    @Column(unique = true, nullable = false, length = 50)
+    private String locationId;           // Business ID like LOC-00001
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 150)
     private String locationName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String locationNumber;
 
-    @Column
+    @Column(length = 255)
     private String address;
 
-    @Column
+    @Column(length = 100)
     private String city;
 
-    @OneToMany(mappedBy = "location", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Building> buildings;
 
-    public Location() {}
-
-    @PrePersist
-    public void prePersist() {
-        if (id == null || id.isBlank()) {
-            id = java.util.UUID.randomUUID().toString();
-        }
-        if (locationNumber == null || locationNumber.isBlank()) {
-            pg.pg.prefix.service.PrefixService prefixService = pg.pg.common.util.ApplicationContextUtils.getBean(pg.pg.prefix.service.PrefixService.class);
-            if (prefixService != null) {
-                locationNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(pg.pg.common.util.PrefixType.LOCATION, "LOC");
-            }
-        }
+    /**
+     * Convert Entity to DTO
+     */
+    public LocationDto toLocationDto() {
+        return LocationDto.builder()
+                .locationId(this.locationId)
+                .locationName(this.locationName)
+                .locationNumber(this.locationNumber)
+                .address(this.address)
+                .city(this.city)
+                .status(this.getStatus())
+                .build();
     }
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getLocationName() { return locationName; }
-    public void setLocationName(String locationName) { this.locationName = locationName; }
-
-    public String getLocationNumber() { return locationNumber; }
-    public void setLocationNumber(String locationNumber) { this.locationNumber = locationNumber; }
-
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
-
-    public String getCity() { return city; }
-    public void setCity(String city) { this.city = city; }
-
-    public List<Building> getBuildings() { return buildings; }
-    public void setBuildings(List<Building> buildings) { this.buildings = buildings; }
 }

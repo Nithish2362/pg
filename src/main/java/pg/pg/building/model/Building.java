@@ -5,12 +5,13 @@ import jakarta.persistence.*;
 import pg.pg.common.util.PrefixedUuidGenerator;
 import pg.pg.floor.model.Floor;
 import pg.pg.location.model.Location;
+import pg.pg.utils.Types;
 
 import java.util.List;
 
 @Entity
 @Table(name = "buildings")
-public class Building {
+public class Building{
 
     @Id
     private String id;
@@ -42,7 +43,7 @@ public class Building {
         if (buildingNumber == null || buildingNumber.isBlank()) {
             pg.pg.prefix.service.PrefixService prefixService = pg.pg.common.util.ApplicationContextUtils.getBean(pg.pg.prefix.service.PrefixService.class);
             if (prefixService != null) {
-                buildingNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(pg.pg.common.util.PrefixType.BUILDING, "BLD");
+                buildingNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BUILDING, "BLD");
             }
         }
     }

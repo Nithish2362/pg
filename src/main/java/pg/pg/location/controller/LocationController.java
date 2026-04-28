@@ -3,40 +3,37 @@ package pg.pg.location.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
-import pg.pg.location.model.Location;
+import pg.pg.location.Dto.LocationDto;
 import pg.pg.location.service.LocationService;
+import pg.pg.utils.Types;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/admin/locations")
+@RequestMapping("/api/admin/locations")   // Cleaner mapping
 public class LocationController {
 
     private final LocationService locationService;
 
-    @GetMapping
-    public SuccessResponse getAll() {
-        return new SuccessResponse("Locations fetched successfully", locationService.getAll());
-    }
-
-    @GetMapping("/{id}")
-    public SuccessResponse getById(@PathVariable String id) {
-        return new SuccessResponse("Location fetched successfully", locationService.getById(id).orElse(null));
-    }
-
     @PostMapping
-    public SuccessResponse create(@RequestBody Location location) {
-        return new SuccessResponse("Location saved successfully", locationService.create(location));
+    public SuccessResponse createLocation(@RequestBody LocationDto locationDto) {
+        return new SuccessResponse("Location Created Successfully",
+                locationService.createLocation(locationDto));
     }
 
-    @PutMapping("/{id}")
-    public SuccessResponse update(@PathVariable String id, @RequestBody Location location) {
-        return new SuccessResponse("Location updated successfully", locationService.update(id, location));
+    @GetMapping("/get-all")
+    public SuccessResponse getAllLocations() {
+        return new SuccessResponse("Locations Fetched Successfully",
+                locationService.getAllLocations());
     }
 
-    @DeleteMapping("/{id}")
-    public SuccessResponse delete(@PathVariable String id) {
-        locationService.delete(id);
-        return new SuccessResponse("Location deleted successfully", null);
+    @GetMapping("/view")
+    public SuccessResponse getAllPaginated(
+            @RequestParam int page,
+            @RequestParam int pageSize,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false, defaultValue = "ACTIVE") Types.Status status) {
+
+        return new SuccessResponse("Locations Fetched Successfully",
+                locationService.getAllPaginatedLocations(searchTerm, status, page, pageSize));
     }
 }

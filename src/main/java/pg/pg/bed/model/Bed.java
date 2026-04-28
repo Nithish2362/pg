@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import pg.pg.common.util.PrefixedUuidGenerator;
 import pg.pg.room.model.Room;
+import pg.pg.utils.Types;
 
 @Entity
 @Table(name = "beds")
@@ -36,7 +37,7 @@ public class Bed {
         if (bedNumber == null || bedNumber.isBlank()) {
             pg.pg.prefix.service.PrefixService prefixService = pg.pg.common.util.ApplicationContextUtils.getBean(pg.pg.prefix.service.PrefixService.class);
             if (prefixService != null) {
-                bedNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(pg.pg.common.util.PrefixType.BED, "BED");
+                bedNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BED, "BED");
             }
         }
     }

@@ -1,20 +1,10 @@
 package pg.pg.utils;
 
 import java.util.Date;
-import pg.pg.utils.Types.Status;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Getter
@@ -36,9 +26,29 @@ public abstract class BaseModel {
     private Date updatedDate;
 
     @Column(nullable = false, updatable = false)
+    @Temporal(TemporalType.TIMESTAMP)
     private Date createdDate;
 
     @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private Types.Status status = Status.ACTIVE;
+    private Types.Status status = Types.Status.ACTIVE;
+
+    @PrePersist
+    public void prePersist() {
+        Date now = new Date();
+
+        if (createdDate == null) {
+            createdDate = now;
+        }
+
+        updatedDate = now;
+
+        if (status == null) {
+            status = Types.Status.ACTIVE;
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedDate = new Date();
+    }
 }

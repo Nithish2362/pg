@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import pg.pg.common.util.PrefixedUuidGenerator;
 import pg.pg.bed.model.Bed;
 import pg.pg.floor.model.Floor;
+import pg.pg.utils.Types;
 
 import java.util.List;
 
@@ -51,7 +52,7 @@ public class Room {
         if (roomNumber == null || roomNumber.isBlank()) {
             pg.pg.prefix.service.PrefixService prefixService = pg.pg.common.util.ApplicationContextUtils.getBean(pg.pg.prefix.service.PrefixService.class);
             if (prefixService != null) {
-                roomNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(pg.pg.common.util.PrefixType.ROOM, "ROM");
+                roomNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.ROOM, "ROM");
             }
         }
     }
