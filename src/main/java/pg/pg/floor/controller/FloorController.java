@@ -3,7 +3,7 @@ package pg.pg.floor.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
-import pg.pg.floor.model.Floor;
+import pg.pg.floor.dto.FloorDto;
 import pg.pg.floor.service.FloorService;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -24,24 +24,24 @@ public class FloorController {
         return new SuccessResponse("Floors fetched successfully", floorService.getFloorsByBuilding(buildingId));
     }
 
-    @GetMapping("/{id}")
-    public SuccessResponse getFloorById(@PathVariable String id) {
-        return new SuccessResponse("Floor fetched successfully", floorService.getFloorById(id).orElse(null));
+    @GetMapping("/{floorId}")
+    public SuccessResponse getFloorById(@PathVariable String floorId) {
+        return new SuccessResponse("Floor fetched successfully", floorService.getFloorById(floorId));
     }
 
     @PostMapping
-    public SuccessResponse createFloor(@RequestBody Floor floor, @RequestParam String buildingId) {
-        return new SuccessResponse("Floor saved successfully", floorService.createFloor(floor, buildingId));
+    public SuccessResponse createFloor(@RequestBody FloorDto floorDto, @RequestParam String buildingId) {
+        return new SuccessResponse("Floor saved successfully", floorService.createFloor(floorDto, buildingId));
     }
 
-    @PutMapping("/{id}")
-    public SuccessResponse updateFloor(@PathVariable String id, @RequestBody Floor floor) {
-        return new SuccessResponse("Floor updated successfully", floorService.updateFloor(id, floor));
+    @PutMapping("/{floorId}")
+    public SuccessResponse updateFloor(@PathVariable String floorId, @RequestBody FloorDto floorDto) {
+        return new SuccessResponse("Floor updated successfully", floorService.updateFloor(floorId, floorDto));
     }
 
-    @DeleteMapping("/{id}")
-    public SuccessResponse deleteFloor(@PathVariable String id) {
-        floorService.deleteFloor(id);
+    @DeleteMapping("/{floorId}")
+    public SuccessResponse deleteFloor(@PathVariable String floorId) {
+        floorService.deleteFloor(floorId);
         return new SuccessResponse("Floor deleted successfully", null);
     }
 }

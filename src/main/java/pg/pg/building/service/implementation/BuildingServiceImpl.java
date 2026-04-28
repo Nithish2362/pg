@@ -1,49 +1,126 @@
 package pg.pg.building.service.implementation;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import pg.pg.Exception.InvalidDataException;
+import pg.pg.building.dto.BuildingDto;
 import pg.pg.building.model.Building;
-import pg.pg.location.model.Location;
 import pg.pg.building.repository.BuildingRepository;
-import pg.pg.location.repository.LocationRepository;
 import pg.pg.building.service.BuildingService;
+import pg.pg.location.model.Location;
+import pg.pg.location.repository.LocationRepository;
+import pg.pg.prefix.service.PrefixService;
+import pg.pg.utils.Types;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class BuildingServiceImpl implements BuildingService {
 
-    @Autowired
-    private BuildingRepository buildingRepository;
+    private final BuildingRepository buildingRepository;
+    private final LocationRepository locationRepository;
+    private final PrefixService prefixService;
 
-    @Autowired
-    private LocationRepository locationRepository;
+    // CREATE
+    @Override
+    public BuildingDto createBuilding(BuildingDto buildingDto, String locationId) {
 
-    @Override
-    public List<Building> getAll() { return buildingRepository.findAll(); }
-    
-    @Override
-    public List<Building> getByLocation(String locationId) { return buildingRepository.findByLocationId(locationId); }
-    
-    @Override
-    public Optional<Building> getById(String id) { return buildingRepository.findById(id); }
+        Location location = locationRepository.findByLocationId(locationId)
+                .orElseThrow(() ->
+                        new InvalidDataException("Location not found with ID : " + locationId));
 
-    @Override
-    public Building create(Building building, String locationId) {
-        Location location = locationRepository.findById(locationId)
-                .orElseThrow(() -> new RuntimeException("Location not found"));
-        building.setLocation(location);
-        return buildingRepository.save(building);
+        Building building = buildingDto.toBuilding(location);
+
+        // Auto Generate Building ID
+        if (!StringUtils.hasText(building.getBuildingId())) {
+            building.setBuildingId(
+                    prefixService.createPrefixIfNotPresentAndCreateSequence(
+                            Types.PrefixType.BUILDING,
+                            "BLD"
+                    )
+            );
+        }
+
+        // Auto Generate Building Number
+        if (!StringUtils.hasText(building.getBuildingNumber())) {
+            building.setBuildingNumber(
+                    prefixService.createPrefixIfNotPresentAndCreateSequence(
+                            Types.PrefixType.BUILDING,
+                            "BNO"
+                    )
+            );
+        }
+
+        Building saved = buildingRepository.save(building);
+
+        return saved.toBuildingDto();
     }
 
+    // GET ALL
     @Override
-    public Building update(String id, Building details) {
-        Building building = buildingRepository.findById(id).orElseThrow(() -> new RuntimeException("Building not found"));
-        building.setBuildingName(details.getBuildingName());
-        return buildingRepository.save(building);
+    public List<BuildingDto> getAllBuildings() {
+        return buildingRepository.findAll()
+                .stream()
+                .map(Building::toBuildingDto)
+                .collect(Collectors.toList());
     }
 
+    // GET BY LOCATION
     @Override
-    public void delete(String id) { buildingRepository.deleteById(id); }
+    public List<BuildingDto> getBuildingsByLocation(String locationId) {
+        return buildingRepository.findByLocationLocationId(locationId)
+                .stream()
+                .map(Building::toBuildingDto)
+                .collect(Collectors.toList());
+    }
+
+    // GET BY BUILDING ID
+    @Override
+    public BuildingDto getBuildingById(String buildingId) {
+        return buildingRepository.findByBuildingId(buildingId)
+                .map(Building::toBuildingDto)
+                .orElseThrow(() ->
+                        new InvalidDataException("Building not found with ID : " + buildingId));
+    }
+
+    // UPDATE
+    @Override
+    public BuildingDto updateBuilding(String buildingId, BuildingDto buildingDto) {
+
+        Building existing = buildingRepository.findByBuildingId(buildingId)
+                .orElseThrow(() ->
+                        new InvalidDataException("Building not found with ID : " + buildingId));
+
+        Location location = locationRepository.findByLocationId(buildingDto.getLocationId())
+                .orElseThrow(() ->
+                        new InvalidDataException("Location not found with ID : " + buildingDto.getLocationId()));
+
+        existing.setBuildingName(buildingDto.getBuildingName());
+        existing.setBuildingNumber(buildingDto.getBuildingNumber());
+        existing.setLocation(location);
+
+        if (buildingDto.getStatus() != null) {
+            existing.setStatus(buildingDto.getStatus());
+        }
+
+        Building saved = buildingRepository.save(existing);
+
+        return saved.toBuildingDto();
+    }
+
+    // DELETE
+    @Override
+    public void deleteBuilding(String buildingId) {
+
+        Building building = buildingRepository.findByBuildingId(buildingId)
+                .orElseThrow(() ->
+                        new InvalidDataException("Building not found with ID : " + buildingId));
+
+        buildingRepository.delete(building);
+    }
 }

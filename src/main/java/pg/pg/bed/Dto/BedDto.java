@@ -1,15 +1,15 @@
 package pg.pg.bed.Dto;
 
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import pg.pg.bed.model.Bed;
-import pg.pg.common.dto.BaseDto;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class BedDto extends BaseDto {
+public class BedDto extends pg.pg.utils.BaseDto {
 
     private String bedNumber;
     private Boolean isOccupied;

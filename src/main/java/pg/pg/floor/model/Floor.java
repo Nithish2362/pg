@@ -1,68 +1,50 @@
 package pg.pg.floor.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import pg.pg.common.util.PrefixedUuidGenerator;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import pg.pg.building.model.Building;
+import pg.pg.floor.dto.FloorDto;
 import pg.pg.room.model.Room;
-import pg.pg.utils.Types;
+import pg.pg.utils.BaseModel;
 
 import java.util.List;
 
 @Entity
 @Table(name = "floors")
-public class Floor {
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+public class Floor extends BaseModel {
 
-    @Id
-    private String id;
+    @Column(unique = true, nullable = false, length = 50)
+    private String floorId; // Business ID like FLR-00001
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String floorNumber;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String floorName;
 
-    @ManyToOne
-    @JoinColumn(name = "building_id", nullable = false)
-    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "building_ref_id", nullable = false)
     private Building building;
 
-    @Column(name = "building_id", insertable = false, updatable = false)
-    private String buildingId;
-
-    @OneToMany(mappedBy = "floor", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "floor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Room> rooms;
 
-    public Floor() {}
-
-    @PrePersist
-    public void prePersist() {
-        if (id == null || id.isBlank()) {
-            id = java.util.UUID.randomUUID().toString();
-        }
-        if (floorNumber == null || floorNumber.isBlank()) {
-            pg.pg.prefix.service.PrefixService prefixService = pg.pg.common.util.ApplicationContextUtils.getBean(pg.pg.prefix.service.PrefixService.class);
-            if (prefixService != null) {
-                floorNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.FLOOR, "FLR");
-            }
-        }
+    /**
+     * Convert Entity to DTO
+     */
+    public FloorDto toFloorDto() {
+        return FloorDto.builder()
+                .floorId(this.floorId)
+                .floorNumber(this.floorNumber)
+                .floorName(this.floorName)
+                .buildingId(this.building != null ? this.building.getBuildingId() : null)
+                .status(this.getStatus())
+                .build();
     }
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getFloorNumber() { return floorNumber; }
-    public void setFloorNumber(String floorNumber) { this.floorNumber = floorNumber; }
-
-    public String getFloorName() { return floorName; }
-    public void setFloorName(String floorName) { this.floorName = floorName; }
-
-    public Building getBuilding() { return building; }
-    public void setBuilding(Building building) { this.building = building; }
-
-    public String getBuildingId() { return buildingId; }
-    public void setBuildingId(String buildingId) { this.buildingId = buildingId; }
-
-    public List<Room> getRooms() { return rooms; }
-    public void setRooms(List<Room> rooms) { this.rooms = rooms; }
 }

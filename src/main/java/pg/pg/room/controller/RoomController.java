@@ -3,7 +3,7 @@ package pg.pg.room.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
-import pg.pg.room.Dto.RoomDto;
+import pg.pg.room.dto.RoomDto;
 import pg.pg.room.service.RoomService;
 import pg.pg.utils.Types;
 
@@ -26,16 +26,13 @@ public class RoomController {
                 roomService.getAllRooms());
     }
 
-    @GetMapping("/get-all")
-    public SuccessResponse getAllRoomsOld() {
-        return new SuccessResponse("Rooms Fetched Successfully",
-                roomService.getAllRooms());
-    }
+    // Removed /get-all to avoid Spring routing conflict.
+    // /api/admin/rooms already handles GET requests.
 
     @GetMapping("/view")
     public SuccessResponse getAllPaginated(
-            @RequestParam int page,
-            @RequestParam int pageSize,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false, defaultValue = "ACTIVE") Types.Status status) {
 

@@ -1,14 +1,19 @@
 package pg.pg.building.service;
 
-import pg.pg.building.model.Building;
+import pg.pg.building.dto.BuildingDto;
 import java.util.List;
-import java.util.Optional;
 
 public interface BuildingService {
-    List<Building> getAll();
-    List<Building> getByLocation(String locationId);
-    Optional<Building> getById(String id);
-    Building create(Building building, String locationId);
-    Building update(String id, Building details);
-    void delete(String id);
+
+    BuildingDto createBuilding(BuildingDto buildingDto, String locationId);
+
+    List<BuildingDto> getAllBuildings();
+
+    List<BuildingDto> getBuildingsByLocation(String locationId);
+
+    BuildingDto getBuildingById(String buildingId);
+
+    BuildingDto updateBuilding(String buildingId, BuildingDto buildingDto);
+
+    void deleteBuilding(String buildingId);
 }

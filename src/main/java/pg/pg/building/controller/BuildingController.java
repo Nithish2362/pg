@@ -3,7 +3,7 @@ package pg.pg.building.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
-import pg.pg.building.model.Building;
+import pg.pg.building.dto.BuildingDto;
 import pg.pg.building.service.BuildingService;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -15,33 +15,33 @@ public class BuildingController {
     private final BuildingService buildingService;
 
     @GetMapping
-    public SuccessResponse getAll() {
-        return new SuccessResponse("Buildings fetched successfully", buildingService.getAll());
+    public SuccessResponse getAllBuildings() {
+        return new SuccessResponse("Buildings fetched successfully", buildingService.getAllBuildings());
     }
 
     @GetMapping("/location/{locationId}")
-    public SuccessResponse getByLocation(@PathVariable String locationId) {
-        return new SuccessResponse("Buildings fetched successfully", buildingService.getByLocation(locationId));
+    public SuccessResponse getBuildingsByLocation(@PathVariable String locationId) {
+        return new SuccessResponse("Buildings fetched successfully", buildingService.getBuildingsByLocation(locationId));
     }
 
-    @GetMapping("/{id}")
-    public SuccessResponse getById(@PathVariable String id) {
-        return new SuccessResponse("Building fetched successfully", buildingService.getById(id).orElse(null));
+    @GetMapping("/{buildingId}")
+    public SuccessResponse getBuildingById(@PathVariable String buildingId) {
+        return new SuccessResponse("Building fetched successfully", buildingService.getBuildingById(buildingId));
     }
 
     @PostMapping
-    public SuccessResponse create(@RequestBody Building building, @RequestParam String locationId) {
-        return new SuccessResponse("Building saved successfully", buildingService.create(building, locationId));
+    public SuccessResponse createBuilding(@RequestBody BuildingDto buildingDto, @RequestParam String locationId) {
+        return new SuccessResponse("Building saved successfully", buildingService.createBuilding(buildingDto, locationId));
     }
 
-    @PutMapping("/{id}")
-    public SuccessResponse update(@PathVariable String id, @RequestBody Building building) {
-        return new SuccessResponse("Building updated successfully", buildingService.update(id, building));
+    @PutMapping("/{buildingId}")
+    public SuccessResponse updateBuilding(@PathVariable String buildingId, @RequestBody BuildingDto buildingDto) {
+        return new SuccessResponse("Building updated successfully", buildingService.updateBuilding(buildingId, buildingDto));
     }
 
-    @DeleteMapping("/{id}")
-    public SuccessResponse delete(@PathVariable String id) {
-        buildingService.delete(id);
+    @DeleteMapping("/{buildingId}")
+    public SuccessResponse deleteBuilding(@PathVariable String buildingId) {
+        buildingService.deleteBuilding(buildingId);
         return new SuccessResponse("Building deleted successfully", null);
     }
 }

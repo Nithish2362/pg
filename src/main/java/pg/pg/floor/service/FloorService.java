@@ -1,14 +1,15 @@
 package pg.pg.floor.service;
 
+import pg.pg.floor.dto.FloorDto;
 import pg.pg.floor.model.Floor;
 import java.util.List;
 import java.util.Optional;
 
 public interface FloorService {
-    List<Floor> getAllFloors();
-    List<Floor> getFloorsByBuilding(String buildingId);
-    Optional<Floor> getFloorById(String id);
-    Floor createFloor(Floor floor, String buildingId);
-    Floor updateFloor(String id, Floor floorDetails);
+    List<FloorDto> getAllFloors();
+    List<FloorDto> getFloorsByBuilding(String buildingId);
+    FloorDto getFloorById(String floorId);
+    FloorDto createFloor(FloorDto floor, String buildingId);
+    FloorDto updateFloor(String id, FloorDto floorDetails);
     void deleteFloor(String id);
 }

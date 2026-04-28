@@ -1,68 +1,53 @@
 package pg.pg.building.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import pg.pg.common.util.PrefixedUuidGenerator;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import pg.pg.floor.model.Floor;
 import pg.pg.location.model.Location;
-import pg.pg.utils.Types;
+import pg.pg.building.dto.BuildingDto;
+import pg.pg.utils.BaseModel;
 
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "buildings")
-public class Building{
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+public class Building extends BaseModel {
 
-    @Id
-    private String id;
+    @Column(unique = true, nullable = false, length = 50)
+    private String buildingId; // Business ID like BLD-00001
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String buildingName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String buildingNumber;
 
-    @ManyToOne
-    @JoinColumn(name = "location_id", nullable = false)
-    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_ref_id", nullable = false)
     private Location location;
 
-    @Column(name = "location_id", insertable = false, updatable = false)
-    private String locationId;
-
-    @OneToMany(mappedBy = "building", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "building", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Floor> floors;
 
-    public Building() {}
 
-    @PrePersist
-    public void prePersist() {
-        if (id == null || id.isBlank()) {
-            id = java.util.UUID.randomUUID().toString();
-        }
-        if (buildingNumber == null || buildingNumber.isBlank()) {
-            pg.pg.prefix.service.PrefixService prefixService = pg.pg.common.util.ApplicationContextUtils.getBean(pg.pg.prefix.service.PrefixService.class);
-            if (prefixService != null) {
-                buildingNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BUILDING, "BLD");
-            }
-        }
+
+    /**
+     * Convert Entity to DTO
+     */
+    public BuildingDto toBuildingDto() {
+        return BuildingDto.builder()
+                .buildingId(this.buildingId)
+                .buildingName(this.buildingName)
+                .buildingNumber(this.buildingNumber)
+                .locationId(this.location != null ? this.location.getLocationId() : null)
+                .status(this.getStatus())
+                .build();
     }
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getBuildingName() { return buildingName; }
-    public void setBuildingName(String buildingName) { this.buildingName = buildingName; }
-
-    public String getBuildingNumber() { return buildingNumber; }
-    public void setBuildingNumber(String buildingNumber) { this.buildingNumber = buildingNumber; }
-
-    public Location getLocation() { return location; }
-    public void setLocation(Location location) { this.location = location; }
-
-    public String getLocationId() { return locationId; }
-    public void setLocationId(String locationId) { this.locationId = locationId; }
-
-    public List<Floor> getFloors() { return floors; }
-    public void setFloors(List<Floor> floors) { this.floors = floors; }
 }
