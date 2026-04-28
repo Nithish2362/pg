@@ -1,120 +1,165 @@
+// ===============================
+// TenantServiceImpl.java
+// ===============================
 package pg.pg.tenant.service.implementation;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import pg.pg.bed.model.Bed;
-import pg.pg.tenant.model.Tenant;
-import pg.pg.user.model.User;
 import pg.pg.bed.repository.BedRepository;
+import pg.pg.prefix.service.PrefixService;
+import pg.pg.tenant.Dto.TenantDto;
+import pg.pg.tenant.model.Tenant;
 import pg.pg.tenant.repository.TenantRepository;
-import pg.pg.user.repository.UserRepository;
 import pg.pg.tenant.service.TenantService;
+import pg.pg.user.model.User;
+import pg.pg.user.repository.UserRepository;
+import pg.pg.utils.Types;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class TenantServiceImpl implements TenantService {
 
-    @Autowired
-    private TenantRepository tenantRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private BedRepository bedRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final TenantRepository tenantRepository;
+    private final BedRepository bedRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final PrefixService prefixService;
 
     @Override
-    public List<Tenant> getAllTenants() {
-        return tenantRepository.findAll();
-    }
+    public TenantDto createTenant(TenantDto dto, String bedId) {
 
-    @Override
-    public Optional<Tenant> getTenantById(Long id) {
-        return tenantRepository.findById(id);
-    }
+        validateTenant(dto);
 
-    @Override
-    public Optional<Tenant> getTenantByUserId(Long userId) {
-        return tenantRepository.findByUserId(userId);
-    }
+        Tenant tenant = dto.toTenant();
 
-    @Override
-    public Optional<Tenant> getTenantByPgNumber(String pgNumber) {
-        return tenantRepository.findByPgNumber(pgNumber);
-    }
+        if (!StringUtils.hasText(dto.getPgNumber())) {
 
-    @Override
-    public Tenant createTenant(Tenant tenant, String bedId) {
-        String pgNumber = generatePgNumber();
-        tenant.setPgNumber(pgNumber);
-        tenant.setJoinDate(LocalDate.now());
-        tenant.setIsActive(true);
+            tenant.setPgNumber(
+                    prefixService.createPrefixIfNotPresentAndCreateSequence(
+                            Types.PrefixType.BED,
+                            "PG"
+                    )
+            );
+
+            tenant.setJoinDate(LocalDate.now());
+            tenant.setStatus(Types.Status.ACTIVE);
+
+        } else {
+
+            Tenant old = tenantRepository.findByPgNumber(dto.getPgNumber())
+                    .orElseThrow(() -> new RuntimeException("Tenant not found"));
+
+            tenant.setId(old.getId());
+            tenant.setJoinDate(old.getJoinDate());
+            tenant.setStatus(old.getStatus());
+            tenant.setUser(old.getUser());
+        }
 
         Bed bed = bedRepository.findById(bedId)
                 .orElseThrow(() -> new RuntimeException("Bed not found"));
-        if (bed.getIsOccupied()) {
-            throw new RuntimeException("Bed is already occupied");
+
+        if (Boolean.TRUE.equals(bed.getIsOccupied()) && tenant.getId() == null) {
+            throw new RuntimeException("Bed already occupied");
         }
+
         bed.setIsOccupied(true);
-        bedRepository.save(bed);
         tenant.setBed(bed);
 
-        User user = new User();
-        user.setUsername(pgNumber);
-        user.setPassword(passwordEncoder.encode("pg@" + tenant.getMobileNumber()));
-        user.setRole("TENANT");
-        user.setEmail(tenant.getEmail());
-        user.setMobileNumber(tenant.getMobileNumber());
-        user.setPgNumber(pgNumber);
-        User savedUser = userRepository.save(user);
-        tenant.setUser(savedUser);
+        if (tenant.getUser() == null) {
 
-        return tenantRepository.save(tenant);
-    }
+            User user = new User();
+            user.setUsername(tenant.getPgNumber());
+            user.setPassword(passwordEncoder.encode("pg@" + tenant.getMobileNumber()));
+            user.setRole("TENANT");
+            user.setEmail(tenant.getEmail());
+            user.setMobileNumber(tenant.getMobileNumber());
+            user.setPgNumber(tenant.getPgNumber());
 
-    @Override
-    public Tenant updateTenant(Long id, Tenant tenantDetails) {
-        Tenant tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
-        tenant.setStudentName(tenantDetails.getStudentName());
-        tenant.setMobileNumber(tenantDetails.getMobileNumber());
-        tenant.setFatherName(tenantDetails.getFatherName());
-        tenant.setFatherMobile(tenantDetails.getFatherMobile());
-        tenant.setMotherName(tenantDetails.getMotherName());
-        tenant.setMotherMobile(tenantDetails.getMotherMobile());
-        tenant.setEmail(tenantDetails.getEmail());
-        tenant.setDob(tenantDetails.getDob());
-        tenant.setAddress(tenantDetails.getAddress());
-        return tenantRepository.save(tenant);
-    }
-
-    @Override
-    public void deactivateTenant(Long id) {
-        Tenant tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
-        tenant.setIsActive(false);
-        if (tenant.getBed() != null) {
-            Bed bed = tenant.getBed();
-            bed.setIsOccupied(false);
-            bedRepository.save(bed);
+            tenant.setUser(userRepository.save(user));
         }
+
+        return tenantRepository.save(tenant).toTenantDto();
+    }
+
+    @Override
+    public List<TenantDto> getAllTenants() {
+        return tenantRepository.findAll()
+                .stream()
+                .map(Tenant::toTenantDto)
+                .collect(Collectors.toList());
+    }
+    @Override
+    public TenantDto getTenantByUserId(Long userId) {
+
+        return tenantRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Tenant not found"))
+                .toTenantDto();
+    }
+    @Override
+    public Page<TenantDto> getAllPaginatedTenants(
+            String searchTerm,
+            Types.Status status,
+            int page,
+            int pageSize) {
+
+        Pageable pageable = PageRequest.of(page, pageSize);
+
+        return tenantRepository
+                .findByStatusAndSearch(status, searchTerm, pageable)
+                .map(Tenant::toTenantDto);
+    }
+
+    @Override
+    public TenantDto getTenantById(String pgNumber) {
+        return tenantRepository.findByPgNumber(pgNumber)
+                .orElseThrow(() -> new RuntimeException("Tenant not found"))
+                .toTenantDto();
+    }
+
+    @Override
+    public void changeStatus(String pgNumber, Types.Status status) {
+
+        Tenant tenant = tenantRepository.findByPgNumber(pgNumber)
+                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+
+        tenant.setStatus(status);
+
+        if (tenant.getBed() != null) {
+            tenant.getBed().setIsOccupied(status == Types.Status.ACTIVE);
+        }
+
         tenantRepository.save(tenant);
     }
 
-    @Override
-    public long getActiveTenantCount() {
-        return tenantRepository.countByIsActive(true);
-    }
+    private void validateTenant(TenantDto dto) {
 
-    private String generatePgNumber() {
-        long count = tenantRepository.count();
-        return String.format("PG-%04d", count + 1);
+        if (!dto.getMobileNumber().matches("\\d{10}")) {
+            throw new RuntimeException("Student mobile must be 10 digits");
+        }
+
+        if (StringUtils.hasText(dto.getFatherMobile())
+                && !dto.getFatherMobile().matches("\\d{10}")) {
+            throw new RuntimeException("Father mobile invalid");
+        }
+
+        if (StringUtils.hasText(dto.getMotherMobile())
+                && !dto.getMotherMobile().matches("\\d{10}")) {
+            throw new RuntimeException("Mother mobile invalid");
+        }
+
+        if (StringUtils.hasText(dto.getGuardianMobile())
+                && !dto.getGuardianMobile().matches("\\d{10}")) {
+            throw new RuntimeException("Guardian mobile invalid");
+        }
     }
 }

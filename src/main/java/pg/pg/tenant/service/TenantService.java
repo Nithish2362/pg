@@ -1,16 +1,28 @@
+// ===============================
+// TenantService.java
+// ===============================
 package pg.pg.tenant.service;
 
-import pg.pg.tenant.model.Tenant;
+import org.springframework.data.domain.Page;
+import pg.pg.tenant.Dto.TenantDto;
+import pg.pg.utils.Types;
+
 import java.util.List;
-import java.util.Optional;
 
 public interface TenantService {
-    List<Tenant> getAllTenants();
-    Optional<Tenant> getTenantById(Long id);
-    Optional<Tenant> getTenantByUserId(Long userId);
-    Optional<Tenant> getTenantByPgNumber(String pgNumber);
-    Tenant createTenant(Tenant tenant, String bedId);
-    Tenant updateTenant(Long id, Tenant tenantDetails);
-    void deactivateTenant(Long id);
-    long getActiveTenantCount();
+
+    TenantDto createTenant(TenantDto dto, String bedId);
+
+    List<TenantDto> getAllTenants();
+
+    Page<TenantDto> getAllPaginatedTenants(
+            String searchTerm,
+            Types.Status status,
+            int page,
+            int pageSize
+    );
+    TenantDto getTenantByUserId(Long userId);
+    TenantDto getTenantById(String pgNumber);
+
+    void changeStatus(String pgNumber, Types.Status status);
 }

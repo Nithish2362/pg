@@ -1,64 +1,96 @@
+// ===============================
+// TenantController.java
+// ===============================
 package pg.pg.tenant.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
-import pg.pg.tenant.model.Tenant;
-import pg.pg.bed.repository.BedRepository;
-import pg.pg.room.repository.RoomRepository;
+import pg.pg.tenant.Dto.TenantDto;
 import pg.pg.tenant.service.TenantService;
+import pg.pg.utils.Types;
 
-import java.util.HashMap;
-import java.util.Map;
-
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/tenants")
 public class TenantController {
 
     private final TenantService tenantService;
-    private final RoomRepository roomRepository;
-    private final BedRepository bedRepository;
-
-    @GetMapping
-    public SuccessResponse getAllTenants() {
-        return new SuccessResponse("Tenants fetched successfully", tenantService.getAllTenants());
-    }
-
-    @GetMapping("/{id}")
-    public SuccessResponse getTenantById(@PathVariable Long id) {
-        return new SuccessResponse("Tenant fetched successfully", tenantService.getTenantById(id).orElse(null));
-    }
 
     @PostMapping
-    public SuccessResponse createTenant(@RequestBody Tenant tenant, @RequestParam String bedId) {
-        try {
-            return new SuccessResponse("Tenant saved successfully", tenantService.createTenant(tenant, bedId));
-        } catch (RuntimeException e) {
-            return new SuccessResponse(e.getMessage(), null); 
-        }
+    public SuccessResponse createTenant(
+            @RequestBody TenantDto dto,
+            @RequestParam String bedId) {
+
+        return new SuccessResponse(
+                "Tenant Created Successfully",
+                tenantService.createTenant(dto, bedId)
+        );
     }
 
-    @PutMapping("/{id}")
-    public SuccessResponse updateTenant(@PathVariable Long id, @RequestBody Tenant tenant) {
-        return new SuccessResponse("Tenant updated successfully", tenantService.updateTenant(id, tenant));
+    @GetMapping
+    public SuccessResponse getAll() {
+        return new SuccessResponse(
+                "Tenants Fetched Successfully",
+                tenantService.getAllTenants()
+        );
     }
 
-    @PutMapping("/{id}/deactivate")
-    public SuccessResponse deactivateTenant(@PathVariable Long id) {
-        tenantService.deactivateTenant(id);
-        return new SuccessResponse("Tenant deactivated successfully", null);
+    @GetMapping("/view")
+    public SuccessResponse getPaginated(
+            @RequestParam int page,
+            @RequestParam int pageSize,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(defaultValue = "ACTIVE") Types.Status status) {
+
+        return new SuccessResponse(
+                "Tenants Fetched Successfully",
+                tenantService.getAllPaginatedTenants(
+                        searchTerm, status, page, pageSize
+                )
+        );
     }
 
-    @GetMapping("/dashboard-stats")
-    public SuccessResponse getDashboardStats() {
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("totalTenants", tenantService.getAllTenants().size());
-        stats.put("activeTenants", tenantService.getActiveTenantCount());
-        stats.put("totalRooms", roomRepository.count());
-        stats.put("totalBeds", bedRepository.count());
-        stats.put("occupiedBeds", bedRepository.findAll().stream().filter(b -> b.getIsOccupied()).count());
-        return new SuccessResponse("Dashboard stats fetched successfully", stats);
+    @GetMapping("/{tenantId}")
+    public SuccessResponse getById(@PathVariable String tenantId) {
+        return new SuccessResponse(
+                "Tenant Fetched Successfully",
+                tenantService.getTenantById(tenantId)
+        );
+    }
+
+    @PutMapping("/{tenantId}")
+    public SuccessResponse update(
+            @PathVariable String tenantId,
+            @RequestBody TenantDto dto) {
+
+        dto.setPgNumber(tenantId);
+
+        return new SuccessResponse(
+                "Tenant Updated Successfully",
+                tenantService.createTenant(dto, dto.getBedId())
+        );
+    }
+
+    @PutMapping("/{tenantId}/activate")
+    public SuccessResponse activate(@PathVariable String tenantId) {
+
+        tenantService.changeStatus(tenantId, Types.Status.ACTIVE);
+
+        return new SuccessResponse(
+                "Tenant Activated Successfully",
+                null
+        );
+    }
+
+    @PutMapping("/{tenantId}/deactivate")
+    public SuccessResponse deactivate(@PathVariable String tenantId) {
+
+        tenantService.changeStatus(tenantId, Types.Status.INACTIVE);
+
+        return new SuccessResponse(
+                "Tenant Deactivated Successfully",
+                null
+        );
     }
 }
