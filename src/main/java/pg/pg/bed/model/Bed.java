@@ -17,6 +17,9 @@ import pg.pg.utils.BaseModel;
 @SuperBuilder
 public class Bed extends BaseModel {
 
+    @Column(unique = true, nullable = false, length = 50)
+    private String bedId; // Business ID like BED-00001
+
     @Column(nullable = false, unique = true)
     private String bedNumber;
 
@@ -25,19 +28,17 @@ public class Bed extends BaseModel {
     private Boolean isOccupied = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id", nullable = false)
+    @JoinColumn(name = "room_ref_id", nullable = false)
     @JsonIgnore
     private Room room;
-
-    @Column(name = "room_id", insertable = false, updatable = false)
-    private String roomId;
 
     public BedDto toBedDto() {
         return BedDto.builder()
                 .id(this.getId())
+                .bedId(this.bedId)
                 .bedNumber(this.bedNumber)
                 .isOccupied(this.isOccupied)
-                .roomId(this.roomId)
+                .roomId(this.room != null ? this.room.getRoomId() : null)
                 .status(this.getStatus())
                 .build();
     }

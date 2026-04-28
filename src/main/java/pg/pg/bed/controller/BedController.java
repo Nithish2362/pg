@@ -42,4 +42,22 @@ public class BedController {
         return new SuccessResponse("Beds Fetched Successfully",
                 bedService.getAllPaginatedBeds(searchTerm, status, page, pageSize));
     }
+
+    @GetMapping("/{bedId}")
+    public SuccessResponse getBedById(@PathVariable String bedId) {
+        return new SuccessResponse("Bed Fetched Successfully",
+                bedService.getBedById(bedId));
+    }
+
+    @PutMapping("/{bedId}")
+    public SuccessResponse updateBed(@PathVariable String bedId, @RequestBody BedDto bedDto) {
+        return new SuccessResponse("Bed Updated Successfully",
+                bedService.updateBed(bedId, bedDto));
+    }
+
+    @DeleteMapping("/{bedId}")
+    public SuccessResponse deleteBed(@PathVariable String bedId) {
+        bedService.deleteBed(bedId);
+        return new SuccessResponse("Bed Deleted Successfully", null);
+    }
 }

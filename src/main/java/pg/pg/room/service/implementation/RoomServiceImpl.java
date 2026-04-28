@@ -1,6 +1,5 @@
 package pg.pg.room.service.implementation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,8 +28,6 @@ public class RoomServiceImpl implements RoomService {
     private final RoomRepository roomRepository;
     private final FloorRepository floorRepository;
     private final PrefixService prefixService;
-    private final ObjectMapper objectMapper;
-
     @Override
     public RoomDto createRoom(RoomDto roomDto) {
         Floor floor = floorRepository.findByFloorId(roomDto.getFloorId())
@@ -62,7 +59,7 @@ public class RoomServiceImpl implements RoomService {
     public List<RoomDto> getAllRooms() {
         return roomRepository.findAll()
                 .stream()
-                .map(this::convertToDto)
+                .map(Room::toRoomDto)
                 .collect(Collectors.toList());
     }
 
@@ -75,12 +72,43 @@ public class RoomServiceImpl implements RoomService {
     ) {
         Pageable pageable = PageRequest.of(page, pageSize);
 
-        // Fixed: Map Page<Room> to Page<RoomDto> to match interface contract
         return roomRepository.findByStatusAndSearch(status, searchTerm, pageable)
-                .map(this::convertToDto);
+                .map(Room::toRoomDto);
     }
 
-    private RoomDto convertToDto(Room room) {
-        return objectMapper.convertValue(room, RoomDto.class);
+    @Override
+    public RoomDto getRoomById(String roomId) {
+        return roomRepository.findByRoomId(roomId)
+                .map(Room::toRoomDto)
+                .orElseThrow(() -> new InvalidDataException("Room not found with ID: " + roomId));
+    }
+
+    @Override
+    public RoomDto updateRoom(String roomId, RoomDto roomDto) {
+        Room existing = roomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new InvalidDataException("Room not found with ID: " + roomId));
+
+        Floor floor = floorRepository.findByFloorId(roomDto.getFloorId())
+                .orElseThrow(() -> new InvalidDataException("Floor not found with ID: " + roomDto.getFloorId()));
+
+        existing.setRoomNumber(roomDto.getRoomNumber());
+        existing.setRoomType(roomDto.getRoomType());
+        existing.setSharingType(roomDto.getSharingType());
+        existing.setMonthlyRent(roomDto.getMonthlyRent());
+        existing.setTotalBeds(roomDto.getTotalBeds());
+        existing.setFloor(floor);
+        
+        if (roomDto.getStatus() != null) {
+            existing.setStatus(roomDto.getStatus());
+        }
+
+        return roomRepository.save(existing).toRoomDto();
+    }
+
+    @Override
+    public void deleteRoom(String roomId) {
+        Room existing = roomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new InvalidDataException("Room not found with ID: " + roomId));
+        roomRepository.delete(existing);
     }
 }

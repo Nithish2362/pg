@@ -14,6 +14,8 @@ import java.util.Optional;
 @Repository
 public interface BedRepository extends JpaRepository<Bed, String> {
 
+    Optional<Bed> findByBedId(String bedId);
+
     Optional<Bed> findByBedNumber(String bedNumber);
 
     @Query("""

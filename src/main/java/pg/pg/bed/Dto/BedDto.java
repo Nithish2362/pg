@@ -11,6 +11,7 @@ import pg.pg.bed.model.Bed;
 @SuperBuilder
 public class BedDto extends pg.pg.utils.BaseDto {
 
+    private String bedId;
     private String bedNumber;
     private Boolean isOccupied;
     private String roomId;

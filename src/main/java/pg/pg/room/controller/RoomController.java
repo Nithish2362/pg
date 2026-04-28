@@ -39,4 +39,22 @@ public class RoomController {
         return new SuccessResponse("Rooms Fetched Successfully",
                 roomService.getAllPaginatedRooms(searchTerm, status, page, pageSize));
     }
+
+    @GetMapping("/{roomId}")
+    public SuccessResponse getRoomById(@PathVariable String roomId) {
+        return new SuccessResponse("Room Fetched Successfully",
+                roomService.getRoomById(roomId));
+    }
+
+    @PutMapping("/{roomId}")
+    public SuccessResponse updateRoom(@PathVariable String roomId, @RequestBody RoomDto roomDto) {
+        return new SuccessResponse("Room Updated Successfully",
+                roomService.updateRoom(roomId, roomDto));
+    }
+
+    @DeleteMapping("/{roomId}")
+    public SuccessResponse deleteRoom(@PathVariable String roomId) {
+        roomService.deleteRoom(roomId);
+        return new SuccessResponse("Room Deleted Successfully", null);
+    }
 }

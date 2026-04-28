@@ -1,6 +1,5 @@
 package pg.pg.location.service.implementation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,7 +24,6 @@ public class LocationServiceImpl implements LocationService {
 
     private final LocationRepository locationRepository;
     private final PrefixService prefixService;
-    private final ObjectMapper objectMapper;
 
     @Override
     public LocationDto createLocation(LocationDto locationDto) {
@@ -49,17 +47,14 @@ public class LocationServiceImpl implements LocationService {
     public List<LocationDto> getAllLocations() {
         return locationRepository.findAll()
                 .stream()
-                .map(this::convertToDto)
+                .map(Location::toLocationDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public Page<Location> getAllPaginatedLocations(String searchTerm, Types.Status status, int page, int pageSize) {
+    public Page<LocationDto> getAllPaginatedLocations(String searchTerm, Types.Status status, int page, int pageSize) {
         Pageable pageable = PageRequest.of(page, pageSize);
-        return locationRepository.findByStatusAndSearch(status, searchTerm, pageable);
-    }
-
-    private LocationDto convertToDto(Location location) {
-        return objectMapper.convertValue(location, LocationDto.class);
+        return locationRepository.findByStatusAndSearch(status, searchTerm, pageable)
+                .map(Location::toLocationDto);
     }
 }

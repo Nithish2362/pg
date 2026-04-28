@@ -18,4 +18,10 @@ public interface RoomService {
             int page,
             int pageSize
     );
+
+    RoomDto getRoomById(String roomId);
+
+    RoomDto updateRoom(String roomId, RoomDto roomDto);
+
+    void deleteRoom(String roomId);
 }

@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import pg.pg.Exception.InvalidDataException;
 import pg.pg.bed.Dto.BedDto;
 import pg.pg.bed.model.Bed;
@@ -30,14 +31,18 @@ public class BedServiceImpl implements BedService {
 
     @Override
     public BedDto createBed(BedDto bedDto) {
-        Room room = roomRepository.findById(bedDto.getRoomId())
+        Room room = roomRepository.findByRoomId(bedDto.getRoomId())
                 .orElseThrow(() -> new InvalidDataException("Room not found with ID: " + bedDto.getRoomId()));
 
         Bed bed = bedDto.toBed();
         bed.setRoom(room);
         
+        if (!StringUtils.hasText(bed.getBedId())) {
+            bed.setBedId(prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BED, "BED"));
+        }
+
         if (bed.getBedNumber() == null || bed.getBedNumber().isEmpty()) {
-            bed.setBedNumber(prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BED, "BED"));
+            bed.setBedNumber(prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BED, "BNO"));
         }
 
         return bedRepository.save(bed).toBedDto();
@@ -55,5 +60,38 @@ public class BedServiceImpl implements BedService {
         Pageable pageable = PageRequest.of(page, pageSize);
         return bedRepository.findByStatusAndSearch(status, searchTerm, pageable)
                 .map(Bed::toBedDto);
+    }
+
+    @Override
+    public BedDto getBedById(String bedId) {
+        return bedRepository.findByBedId(bedId)
+                .map(Bed::toBedDto)
+                .orElseThrow(() -> new InvalidDataException("Bed not found with ID: " + bedId));
+    }
+
+    @Override
+    public BedDto updateBed(String bedId, BedDto bedDto) {
+        Bed existing = bedRepository.findByBedId(bedId)
+                .orElseThrow(() -> new InvalidDataException("Bed not found with ID: " + bedId));
+
+        Room room = roomRepository.findByRoomId(bedDto.getRoomId())
+                .orElseThrow(() -> new InvalidDataException("Room not found with ID: " + bedDto.getRoomId()));
+
+        existing.setBedNumber(bedDto.getBedNumber());
+        existing.setIsOccupied(bedDto.getIsOccupied());
+        existing.setRoom(room);
+        
+        if (bedDto.getStatus() != null) {
+            existing.setStatus(bedDto.getStatus());
+        }
+
+        return bedRepository.save(existing).toBedDto();
+    }
+
+    @Override
+    public void deleteBed(String bedId) {
+        Bed existing = bedRepository.findByBedId(bedId)
+                .orElseThrow(() -> new InvalidDataException("Bed not found with ID: " + bedId));
+        bedRepository.delete(existing);
     }
 }
