@@ -20,7 +20,8 @@ public class Payment {
     private Tenant tenant;
 
     @Column(name = "tenant_id", insertable = false, updatable = false)
-    private Long tenantId;
+    private String tenantId;
+
 
     @Column(nullable = false)
     private Double amount;
@@ -49,8 +50,9 @@ public class Payment {
     public Tenant getTenant() { return tenant; }
     public void setTenant(Tenant tenant) { this.tenant = tenant; }
 
-    public Long getTenantId() { return tenantId; }
-    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
+    public String getTenantId() { return tenantId; }
+    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+
 
     public Double getAmount() { return amount; }
     public void setAmount(Double amount) { this.amount = amount; }

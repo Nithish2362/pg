@@ -12,7 +12,7 @@ import org.springframework.util.StringUtils;
 import pg.pg.bed.model.Bed;
 import pg.pg.bed.repository.BedRepository;
 import pg.pg.prefix.service.PrefixService;
-import pg.pg.tenant.Dto.TenantDto;
+import pg.pg.tenant.dto.TenantDto;
 import pg.pg.tenant.model.Tenant;
 import pg.pg.tenant.repository.TenantRepository;
 import pg.pg.tenant.service.TenantService;
@@ -41,6 +41,7 @@ public class TenantServiceImpl implements TenantService {
         validateTenant(dto);
 
         Tenant tenant = dto.toTenant();
+        Bed oldBed = null;
 
         if (!StringUtils.hasText(dto.getPgNumber())) {
 
@@ -62,18 +63,44 @@ public class TenantServiceImpl implements TenantService {
             tenant.setId(old.getId());
             tenant.setJoinDate(old.getJoinDate());
             tenant.setStatus(old.getStatus());
-            tenant.setUser(old.getUser());
+            oldBed = old.getBed();
+            
+            User user = old.getUser();
+            if (user != null) {
+                // Update user details if they changed
+                user.setEmail(tenant.getEmail());
+                user.setMobileNumber(tenant.getMobileNumber());
+                // Update password if mobile number changed
+                user.setPassword(passwordEncoder.encode("pg@" + tenant.getMobileNumber()));
+                userRepository.save(user);
+                tenant.setUser(user);
+            }
         }
 
-        Bed bed = bedRepository.findById(bedId)
+        Bed newBed = bedRepository.findByBedId(bedId)
                 .orElseThrow(() -> new RuntimeException("Bed not found"));
 
-        if (Boolean.TRUE.equals(bed.getIsOccupied()) && tenant.getId() == null) {
-            throw new RuntimeException("Bed already occupied");
+
+        // If bed is changed or it's a new tenant
+        if (oldBed == null || !oldBed.getBedId().equals(newBed.getBedId())) {
+            
+            // Check if new bed is occupied
+            if (Boolean.TRUE.equals(newBed.getIsOccupied())) {
+                throw new RuntimeException("Target bed is already occupied");
+            }
+
+            // Release old bed if it exists
+            if (oldBed != null) {
+                oldBed.setIsOccupied(false);
+                bedRepository.save(oldBed);
+            }
+            
+            // Occupy new bed
+            newBed.setIsOccupied(true);
+            bedRepository.save(newBed);
         }
 
-        bed.setIsOccupied(true);
-        tenant.setBed(bed);
+        tenant.setBed(newBed);
 
         if (tenant.getUser() == null) {
 

@@ -1,4 +1,5 @@
-package pg.pg.bed.Dto;
+package pg.pg.bed.dto;
+
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;

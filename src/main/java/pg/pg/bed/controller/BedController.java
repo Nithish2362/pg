@@ -2,7 +2,7 @@ package pg.pg.bed.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import pg.pg.bed.Dto.BedDto;
+import pg.pg.bed.dto.BedDto;
 import pg.pg.bed.service.BedService;
 import pg.pg.common.dto.SuccessResponse;
 import pg.pg.utils.Types;
@@ -47,6 +47,12 @@ public class BedController {
     public SuccessResponse getBedById(@PathVariable String bedId) {
         return new SuccessResponse("Bed Fetched Successfully",
                 bedService.getBedById(bedId));
+    }
+
+    @GetMapping("/room/{roomId}/available")
+    public SuccessResponse getAvailableBeds(@PathVariable String roomId) {
+        return new SuccessResponse("Available Beds Fetched Successfully",
+                bedService.getAvailableBedsByRoom(roomId));
     }
 
     @PutMapping("/{bedId}")

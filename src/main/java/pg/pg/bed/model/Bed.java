@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import pg.pg.bed.Dto.BedDto;
+import pg.pg.bed.dto.BedDto;
+
 import pg.pg.room.model.Room;
 import pg.pg.utils.BaseModel;
 

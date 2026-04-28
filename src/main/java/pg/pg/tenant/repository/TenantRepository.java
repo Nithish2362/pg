@@ -31,7 +31,7 @@ public interface TenantRepository extends JpaRepository<Tenant, Long> {
             OR LOWER(t.mobileNumber) LIKE LOWER(CONCAT(:searchTerm,'%'))
             OR LOWER(t.email) LIKE LOWER(CONCAT(:searchTerm,'%'))
         )
-        ORDER BY t.createdAt DESC
+        ORDER BY t.createdDate DESC
     """)
     Page<Tenant> findByStatusAndSearch(
             @Param("status") Types.Status status,

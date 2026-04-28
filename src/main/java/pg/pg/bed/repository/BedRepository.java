@@ -29,4 +29,8 @@ public interface BedRepository extends JpaRepository<Bed, String> {
             @Param("searchTerm") String searchTerm,
             Pageable pageable
     );
+    @Query("SELECT b FROM Bed b WHERE b.room.roomId = :roomId AND b.isOccupied = false AND b.status = :status")
+    java.util.List<Bed> findAvailableBedsByRoomId(@Param("roomId") String roomId, @Param("status") Types.Status status);
+
+
 }

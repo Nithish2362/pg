@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import pg.pg.bed.model.Bed;
-import pg.pg.tenant.Dto.TenantDto;
+import pg.pg.tenant.dto.TenantDto;
 import pg.pg.user.model.User;
 import pg.pg.utils.BaseModel;
 

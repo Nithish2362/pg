@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
 import pg.pg.payment.model.Payment;
 import pg.pg.payment.service.PaymentService;
-import pg.pg.tenant.Dto.TenantDto;
+import pg.pg.tenant.dto.TenantDto;
 import pg.pg.tenant.service.TenantService;
 import pg.pg.user.model.User;
 import pg.pg.user.repository.UserRepository;

@@ -1,7 +1,8 @@
 // ===============================
 // TenantDto.java
 // ===============================
-package pg.pg.tenant.Dto;
+package pg.pg.tenant.dto;
+
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import pg.pg.Exception.InvalidDataException;
-import pg.pg.bed.Dto.BedDto;
+import pg.pg.bed.dto.BedDto;
 import pg.pg.bed.model.Bed;
 import pg.pg.bed.repository.BedRepository;
 import pg.pg.bed.service.BedService;
@@ -93,5 +93,13 @@ public class BedServiceImpl implements BedService {
         Bed existing = bedRepository.findByBedId(bedId)
                 .orElseThrow(() -> new InvalidDataException("Bed not found with ID: " + bedId));
         bedRepository.delete(existing);
+    }
+
+    @Override
+    public List<BedDto> getAvailableBedsByRoom(String roomId) {
+        return bedRepository.findAvailableBedsByRoomId(roomId, Types.Status.ACTIVE)
+                .stream()
+                .map(Bed::toBedDto)
+                .collect(Collectors.toList());
     }
 }

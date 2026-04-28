@@ -28,6 +28,8 @@ public class RoomServiceImpl implements RoomService {
     private final RoomRepository roomRepository;
     private final FloorRepository floorRepository;
     private final PrefixService prefixService;
+    private final pg.pg.bed.repository.BedRepository bedRepository;
+
     @Override
     public RoomDto createRoom(RoomDto roomDto) {
         Floor floor = floorRepository.findByFloorId(roomDto.getFloorId())
@@ -36,8 +38,10 @@ public class RoomServiceImpl implements RoomService {
                 );
 
         Room room = roomDto.toRoom(floor);
+        boolean isNew = false;
 
         if (!StringUtils.hasText(room.getRoomId())) {
+            isNew = true;
             room.setRoomId(
                     prefixService.createPrefixIfNotPresentAndCreateSequence(
                             Types.PrefixType.ROOM,
@@ -52,6 +56,21 @@ public class RoomServiceImpl implements RoomService {
         }
 
         Room saved = roomRepository.save(room);
+
+        // Auto-generate beds for new rooms
+        if (isNew && saved.getTotalBeds() != null && saved.getTotalBeds() > 0) {
+            for (int i = 1; i <= saved.getTotalBeds(); i++) {
+                pg.pg.bed.model.Bed bed = new pg.pg.bed.model.Bed();
+                bed.setRoom(saved);
+                bed.setBedNumber(saved.getRoomId() + "-" + i);
+
+                bed.setBedId(prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BED, "BED"));
+                bed.setIsOccupied(false);
+                bed.setStatus(Types.Status.ACTIVE);
+                bedRepository.save(bed);
+            }
+        }
+
         return saved.toRoomDto();
     }
 

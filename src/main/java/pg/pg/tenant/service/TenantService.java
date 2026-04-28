@@ -4,7 +4,7 @@
 package pg.pg.tenant.service;
 
 import org.springframework.data.domain.Page;
-import pg.pg.tenant.Dto.TenantDto;
+import pg.pg.tenant.dto.TenantDto;
 import pg.pg.utils.Types;
 
 import java.util.List;
