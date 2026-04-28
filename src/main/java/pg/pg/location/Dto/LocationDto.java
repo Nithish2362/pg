@@ -19,6 +19,8 @@ public class LocationDto extends BaseDto {
     private String locationNumber;
     private String address;
     private String city;
+    private String state;
+    private String country;
 
     /**
      * Convert DTO to Entity
@@ -30,6 +32,8 @@ public class LocationDto extends BaseDto {
                 .locationNumber(this.locationNumber)
                 .address(this.address)
                 .city(this.city)
+                .state(this.state)
+                .country(this.country)
                 .status(this.getStatus())           // from BaseDto
                 .build();
     }

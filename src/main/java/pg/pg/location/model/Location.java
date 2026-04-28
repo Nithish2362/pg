@@ -24,7 +24,7 @@ public class Location extends BaseModel {
     @Column(nullable = false, length = 150)
     private String locationName;
 
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String locationNumber;
 
     @Column(length = 255)
@@ -32,6 +32,12 @@ public class Location extends BaseModel {
 
     @Column(length = 100)
     private String city;
+
+    @Column(length = 100)
+    private String state;
+
+    @Column(length = 100)
+    private String country;
 
     @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Building> buildings;
@@ -46,6 +52,8 @@ public class Location extends BaseModel {
                 .locationNumber(this.locationNumber)
                 .address(this.address)
                 .city(this.city)
+                .state(this.state)
+                .country(this.country)
                 .status(this.getStatus())
                 .build();
     }

@@ -2,24 +2,29 @@ package pg.pg.bed.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import pg.pg.common.util.PrefixedUuidGenerator;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+import pg.pg.bed.Dto.BedDto;
 import pg.pg.room.model.Room;
-import pg.pg.utils.Types;
+import pg.pg.utils.BaseModel;
 
 @Entity
 @Table(name = "beds")
-public class Bed {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class Bed extends BaseModel {
 
-    @Id
-    private String id;
-
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String bedNumber;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean isOccupied = false;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
     @JsonIgnore
     private Room room;
@@ -27,33 +32,13 @@ public class Bed {
     @Column(name = "room_id", insertable = false, updatable = false)
     private String roomId;
 
-    public Bed() {}
-
-    @PrePersist
-    public void prePersist() {
-        if (id == null || id.isBlank()) {
-            id = java.util.UUID.randomUUID().toString();
-        }
-        if (bedNumber == null || bedNumber.isBlank()) {
-            pg.pg.prefix.service.PrefixService prefixService = pg.pg.common.util.ApplicationContextUtils.getBean(pg.pg.prefix.service.PrefixService.class);
-            if (prefixService != null) {
-                bedNumber = prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BED, "BED");
-            }
-        }
+    public BedDto toBedDto() {
+        return BedDto.builder()
+                .id(this.getId())
+                .bedNumber(this.bedNumber)
+                .isOccupied(this.isOccupied)
+                .roomId(this.roomId)
+                .status(this.getStatus())
+                .build();
     }
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getBedNumber() { return bedNumber; }
-    public void setBedNumber(String bedNumber) { this.bedNumber = bedNumber; }
-
-    public Boolean getIsOccupied() { return isOccupied; }
-    public void setIsOccupied(Boolean isOccupied) { this.isOccupied = isOccupied; }
-
-    public Room getRoom() { return room; }
-    public void setRoom(Room room) { this.room = room; }
-
-    public String getRoomId() { return roomId; }
-    public void setRoomId(String roomId) { this.roomId = roomId; }
 }

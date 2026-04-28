@@ -2,10 +2,11 @@ package pg.pg.bed.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import pg.pg.common.dto.SuccessResponse;
+import pg.pg.bed.Dto.BedDto;
 import pg.pg.bed.service.BedService;
+import pg.pg.common.dto.SuccessResponse;
+import pg.pg.utils.Types;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/beds")
@@ -13,23 +14,32 @@ public class BedController {
 
     private final BedService bedService;
 
+    @PostMapping
+    public SuccessResponse createBed(@RequestBody BedDto bedDto) {
+        return new SuccessResponse("Bed Created Successfully",
+                bedService.createBed(bedDto));
+    }
+
     @GetMapping
     public SuccessResponse getAllBeds() {
-        return new SuccessResponse("Beds fetched successfully", bedService.getAllBeds());
+        return new SuccessResponse("Beds Fetched Successfully",
+                bedService.getAllBeds());
     }
 
-    @GetMapping("/room/{roomId}")
-    public SuccessResponse getBedsByRoom(@PathVariable String roomId) {
-        return new SuccessResponse("Beds fetched successfully", bedService.getBedsByRoom(roomId));
+    @GetMapping("/get-all")
+    public SuccessResponse getAllBedsOld() {
+        return new SuccessResponse("Beds Fetched Successfully",
+                bedService.getAllBeds());
     }
 
-    @GetMapping("/room/{roomId}/available")
-    public SuccessResponse getAvailableBeds(@PathVariable String roomId) {
-        return new SuccessResponse("Available beds fetched successfully", bedService.getAvailableBedsByRoom(roomId));
-    }
+    @GetMapping("/view")
+    public SuccessResponse getAllPaginated(
+            @RequestParam int page,
+            @RequestParam int pageSize,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false, defaultValue = "ACTIVE") Types.Status status) {
 
-    @GetMapping("/{id}")
-    public SuccessResponse getBedById(@PathVariable String id) {
-        return new SuccessResponse("Bed fetched successfully", bedService.getBedById(id).orElse(null));
+        return new SuccessResponse("Beds Fetched Successfully",
+                bedService.getAllPaginatedBeds(searchTerm, status, page, pageSize));
     }
 }

@@ -3,10 +3,10 @@ package pg.pg.room.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
-import pg.pg.room.model.Room;
+import pg.pg.room.Dto.RoomDto;
 import pg.pg.room.service.RoomService;
+import pg.pg.utils.Types;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/rooms")
@@ -14,34 +14,32 @@ public class RoomController {
 
     private final RoomService roomService;
 
+    @PostMapping
+    public SuccessResponse createRoom(@RequestBody RoomDto roomDto) {
+        return new SuccessResponse("Room Created Successfully",
+                roomService.createRoom(roomDto));
+    }
+
     @GetMapping
     public SuccessResponse getAllRooms() {
-        return new SuccessResponse("Rooms fetched successfully", roomService.getAllRooms());
+        return new SuccessResponse("Rooms Fetched Successfully",
+                roomService.getAllRooms());
     }
 
-    @GetMapping("/floor/{floorId}")
-    public SuccessResponse getRoomsByFloor(@PathVariable String floorId) {
-        return new SuccessResponse("Rooms fetched successfully", roomService.getRoomsByFloor(floorId));
+    @GetMapping("/get-all")
+    public SuccessResponse getAllRoomsOld() {
+        return new SuccessResponse("Rooms Fetched Successfully",
+                roomService.getAllRooms());
     }
 
-    @GetMapping("/{id}")
-    public SuccessResponse getRoomById(@PathVariable String id) {
-        return new SuccessResponse("Room fetched successfully", roomService.getRoomById(id).orElse(null));
-    }
+    @GetMapping("/view")
+    public SuccessResponse getAllPaginated(
+            @RequestParam int page,
+            @RequestParam int pageSize,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false, defaultValue = "ACTIVE") Types.Status status) {
 
-    @PostMapping
-    public SuccessResponse createRoom(@RequestBody Room room, @RequestParam String floorId) {
-        return new SuccessResponse("Room saved successfully", roomService.createRoom(room, floorId));
-    }
-
-    @PutMapping("/{id}")
-    public SuccessResponse updateRoom(@PathVariable String id, @RequestBody Room room) {
-        return new SuccessResponse("Room updated successfully", roomService.updateRoom(id, room));
-    }
-
-    @DeleteMapping("/{id}")
-    public SuccessResponse deleteRoom(@PathVariable String id) {
-        roomService.deleteRoom(id);
-        return new SuccessResponse("Room deleted successfully", null);
+        return new SuccessResponse("Rooms Fetched Successfully",
+                roomService.getAllPaginatedRooms(searchTerm, status, page, pageSize));
     }
 }

@@ -1,14 +1,13 @@
 package pg.pg.room.service;
 
-import pg.pg.room.model.Room;
+import org.springframework.data.domain.Page;
+import pg.pg.room.Dto.RoomDto;
+import pg.pg.utils.Types;
+
 import java.util.List;
-import java.util.Optional;
 
 public interface RoomService {
-    List<Room> getAllRooms();
-    List<Room> getRoomsByFloor(String floorId);
-    Optional<Room> getRoomById(String id);
-    Room createRoom(Room room, String floorId);
-    Room updateRoom(String id, Room roomDetails);
-    void deleteRoom(String id);
+    RoomDto createRoom(RoomDto roomDto);
+    List<RoomDto> getAllRooms();
+    Page<RoomDto> getAllPaginatedRooms(String searchTerm, Types.Status status, int page, int pageSize);
 }

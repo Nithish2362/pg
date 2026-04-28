@@ -29,6 +29,7 @@ public abstract class BaseModel {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdDate;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private Types.Status status = Types.Status.ACTIVE;
 

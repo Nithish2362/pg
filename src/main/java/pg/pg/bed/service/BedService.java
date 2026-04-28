@@ -1,12 +1,13 @@
 package pg.pg.bed.service;
 
-import pg.pg.bed.model.Bed;
+import org.springframework.data.domain.Page;
+import pg.pg.bed.Dto.BedDto;
+import pg.pg.utils.Types;
+
 import java.util.List;
-import java.util.Optional;
 
 public interface BedService {
-    List<Bed> getAllBeds();
-    List<Bed> getBedsByRoom(String roomId);
-    List<Bed> getAvailableBedsByRoom(String roomId);
-    Optional<Bed> getBedById(String id);
+    BedDto createBed(BedDto bedDto);
+    List<BedDto> getAllBeds();
+    Page<BedDto> getAllPaginatedBeds(String searchTerm, Types.Status status, int page, int pageSize);
 }

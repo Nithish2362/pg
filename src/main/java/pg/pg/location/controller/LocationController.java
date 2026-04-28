@@ -20,8 +20,14 @@ public class LocationController {
                 locationService.createLocation(locationDto));
     }
 
-    @GetMapping("/get-all")
+    @GetMapping
     public SuccessResponse getAllLocations() {
+        return new SuccessResponse("Locations Fetched Successfully",
+                locationService.getAllLocations());
+    }
+
+    @GetMapping("/get-all")
+    public SuccessResponse getAllLocationsOld() {
         return new SuccessResponse("Locations Fetched Successfully",
                 locationService.getAllLocations());
     }

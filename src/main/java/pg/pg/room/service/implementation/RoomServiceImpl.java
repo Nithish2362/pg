@@ -1,78 +1,59 @@
 package pg.pg.room.service.implementation;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import pg.pg.bed.model.Bed;
+import org.springframework.transaction.annotation.Transactional;
+import pg.pg.common.exception.InvalidDataException;
 import pg.pg.floor.model.Floor;
-import pg.pg.room.model.Room;
-import pg.pg.bed.repository.BedRepository;
 import pg.pg.floor.repository.FloorRepository;
+import pg.pg.prefix.service.PrefixService;
+import pg.pg.room.Dto.RoomDto;
+import pg.pg.room.model.Room;
 import pg.pg.room.repository.RoomRepository;
 import pg.pg.room.service.RoomService;
+import pg.pg.utils.Types;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class RoomServiceImpl implements RoomService {
 
-    @Autowired
-    private RoomRepository roomRepository;
-
-    @Autowired
-    private FloorRepository floorRepository;
-
-    @Autowired
-    private BedRepository bedRepository;
+    private final RoomRepository roomRepository;
+    private final FloorRepository floorRepository;
+    private final PrefixService prefixService;
 
     @Override
-    public List<Room> getAllRooms() {
-        return roomRepository.findAll();
-    }
+    public RoomDto createRoom(RoomDto roomDto) {
+        Floor floor = floorRepository.findById(roomDto.getFloorId())
+                .orElseThrow(() -> new InvalidDataException("Floor not found with ID: " + roomDto.getFloorId()));
 
-    @Override
-    public List<Room> getRoomsByFloor(String floorId) {
-        return roomRepository.findByFloorId(floorId);
-    }
-
-    @Override
-    public Optional<Room> getRoomById(String id) {
-        return roomRepository.findById(id);
-    }
-
-    @Override
-    public Room createRoom(Room room, String floorId) {
-        Floor floor = floorRepository.findById(floorId)
-                .orElseThrow(() -> new RuntimeException("Floor not found"));
+        Room room = roomDto.toRoom();
         room.setFloor(floor);
-        Room savedRoom = roomRepository.save(room);
-
-        // Auto-create beds for the room
-        for (int i = 1; i <= room.getTotalBeds(); i++) {
-            Bed bed = new Bed();
-            bed.setBedNumber("B" + i);
-            bed.setRoom(savedRoom);
-            bed.setIsOccupied(false);
-            bedRepository.save(bed);
+        
+        if (room.getRoomNumber() == null || room.getRoomNumber().isEmpty()) {
+            room.setRoomNumber(prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.ROOM, "ROM"));
         }
 
-        return roomRepository.findById(savedRoom.getId()).orElse(savedRoom);
+        return roomRepository.save(room).toRoomDto();
     }
 
     @Override
-    public Room updateRoom(String id, Room roomDetails) {
-        Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Room not found"));
-        room.setRoomNumber(roomDetails.getRoomNumber());
-        room.setRoomType(roomDetails.getRoomType());
-        room.setSharingType(roomDetails.getSharingType());
-        room.setMonthlyRent(roomDetails.getMonthlyRent());
-        room.setTotalBeds(roomDetails.getTotalBeds());
-        return roomRepository.save(room);
+    public List<RoomDto> getAllRooms() {
+        return roomRepository.findAll().stream()
+                .map(Room::toRoomDto)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public void deleteRoom(String id) {
-        roomRepository.deleteById(id);
+    public Page<RoomDto> getAllPaginatedRooms(String searchTerm, Types.Status status, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page, pageSize);
+        return roomRepository.findByStatusAndSearch(status, searchTerm, pageable)
+                .map(Room::toRoomDto);
     }
 }

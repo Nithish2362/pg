@@ -23,7 +23,7 @@ public class Prefix extends BaseModel {
     private long currentSequence = 1;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private Types.PrefixType prefixType;
 
     public void incrementSequenceNo() {

@@ -31,24 +31,17 @@ public class PrefixService {
     private Prefix getPrefixWithRightLock(Types.PrefixType prefixType) {
         Prefix prefix = prefixRepository.getPrefixWithWriteLock(prefixType);
         if (prefix == null) {
-            throw new InvalidDataException("Invalid PrefixType");
+            throw new InvalidDataException("Invalid PrefixType: " + prefixType);
         }
-
-        Optional<Prefix> optionalPrefix = prefixRepository.findById(prefix.getId());
-        if (optionalPrefix.isPresent()) {
-            prefix = optionalPrefix.get();
-        } else {
-            throw new InvalidDataException("Invalid Prefix");
-        }
-
         return prefix;
     }
 
-    private String formatPrefix(String prefix, long numberSequence, PrefixType prefixType) {
-        if (prefixType == PrefixType.ARTICLESKU || prefixType == PrefixType.VARIANTSKU) {
-            return prefix + "-" + String.format("%06d", numberSequence);
+    private String formatPrefix(String prefix, long numberSequence, Types.PrefixType prefixType) {
+        String base = (prefix != null) ? prefix : "";
+        if (prefixType == Types.PrefixType.ARTICLESKU || prefixType == Types.PrefixType.VARIANTSKU) {
+            return base + "-" + String.format("%06d", numberSequence);
         }
-        return prefix + "-" + String.format("%04d", numberSequence);
+        return base + "-" + String.format("%04d", numberSequence);
     }
 
     public Prefix createNew(Prefix prefix) {
