@@ -18,4 +18,5 @@ public class UserLoginResponseDto {
     private List<FeaturesDto> views;
     private String username;
     private String role;
+    private Boolean isFirstLogin;
 }

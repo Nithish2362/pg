@@ -28,6 +28,21 @@ public class User {
     @Column(nullable = false)
     private String role; // ADMIN or TENANT
 
+    @Column
+    private String fullName;
+
+    @Column
+    private Integer age;
+
+    @Column(name = "is_first_login", columnDefinition = "boolean default true")
+    private Boolean isFirstLogin = true;
+
+    @Column
+    private String otp;
+
+    @Column
+    private java.time.LocalDateTime otpExpiry;
+
     public User() {
     }
 
@@ -35,6 +50,7 @@ public class User {
         this.username = username;
         this.password = password;
         this.role = role;
+        this.isFirstLogin = true;
     }
 
     public Long getId() { return id; }
@@ -57,4 +73,21 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+
+    public Integer getAge() { return age; }
+    public void setAge(Integer age) { this.age = age; }
+
+    public Boolean getIsFirstLogin() { 
+        return isFirstLogin == null || isFirstLogin; 
+    }
+    public void setIsFirstLogin(Boolean isFirstLogin) { this.isFirstLogin = isFirstLogin; }
+
+    public String getOtp() { return otp; }
+    public void setOtp(String otp) { this.otp = otp; }
+
+    public java.time.LocalDateTime getOtpExpiry() { return otpExpiry; }
+    public void setOtpExpiry(java.time.LocalDateTime otpExpiry) { this.otpExpiry = otpExpiry; }
 }

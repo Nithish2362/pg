@@ -38,6 +38,7 @@ public class TenantServiceImpl implements TenantService {
     private final PasswordEncoder passwordEncoder;
     private final PrefixService prefixService;
     private final PaymentRepository paymentRepository;
+    private final pg.pg.utils.EmailService emailService;
 
     @Override
     public TenantDto createTenant(TenantDto dto, String bedId) {
@@ -83,8 +84,7 @@ public class TenantServiceImpl implements TenantService {
                 // Update user details if they changed
                 user.setEmail(tenant.getEmail());
                 user.setMobileNumber(tenant.getMobileNumber());
-                // Update password if mobile number changed
-                user.setPassword(passwordEncoder.encode("pg@" + tenant.getMobileNumber()));
+                user.setFullName(tenant.getStudentName());
                 userRepository.save(user);
                 tenant.setUser(user);
             }
@@ -121,15 +121,22 @@ public class TenantServiceImpl implements TenantService {
 
         if (tenant.getUser() == null) {
 
+            String rawPassword = String.valueOf((int)(Math.random() * 900000 + 100000));
+            
             User user = new User();
             user.setUsername(tenant.getPgNumber());
-            user.setPassword(passwordEncoder.encode("pg@" + tenant.getMobileNumber()));
+            user.setPassword(passwordEncoder.encode(rawPassword));
             user.setRole("TENANT");
             user.setEmail(tenant.getEmail());
             user.setMobileNumber(tenant.getMobileNumber());
             user.setPgNumber(tenant.getPgNumber());
+            user.setFullName(tenant.getStudentName());
+            user.setIsFirstLogin(true);
 
             tenant.setUser(userRepository.save(user));
+
+            // Send email with credentials
+            emailService.sendCredentials(tenant.getEmail(), tenant.getPgNumber(), rawPassword);
         }
 
         tenant = tenantRepository.save(tenant);
