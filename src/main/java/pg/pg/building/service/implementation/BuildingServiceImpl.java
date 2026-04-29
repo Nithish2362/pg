@@ -96,13 +96,15 @@ public class BuildingServiceImpl implements BuildingService {
                 .orElseThrow(() ->
                         new InvalidDataException("Building not found with ID : " + buildingId));
 
-        Location location = locationRepository.findByLocationId(buildingDto.getLocationId())
-                .orElseThrow(() ->
-                        new InvalidDataException("Location not found with ID : " + buildingDto.getLocationId()));
-
-        existing.setBuildingName(buildingDto.getBuildingName());
-        existing.setBuildingNumber(buildingDto.getBuildingNumber());
-        existing.setLocation(location);
+        if (buildingDto.getBuildingName() != null) existing.setBuildingName(buildingDto.getBuildingName());
+        if (buildingDto.getBuildingNumber() != null) existing.setBuildingNumber(buildingDto.getBuildingNumber());
+        
+        if (buildingDto.getLocationId() != null) {
+            Location location = locationRepository.findByLocationId(buildingDto.getLocationId())
+                    .orElseThrow(() ->
+                            new InvalidDataException("Location not found with ID : " + buildingDto.getLocationId()));
+            existing.setLocation(location);
+        }
 
         if (buildingDto.getStatus() != null) {
             existing.setStatus(buildingDto.getStatus());

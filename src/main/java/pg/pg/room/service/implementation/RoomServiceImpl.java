@@ -107,15 +107,17 @@ public class RoomServiceImpl implements RoomService {
         Room existing = roomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new InvalidDataException("Room not found with ID: " + roomId));
 
-        Floor floor = floorRepository.findByFloorId(roomDto.getFloorId())
-                .orElseThrow(() -> new InvalidDataException("Floor not found with ID: " + roomDto.getFloorId()));
+        if (roomDto.getRoomNumber() != null) existing.setRoomNumber(roomDto.getRoomNumber());
+        if (roomDto.getRoomType() != null) existing.setRoomType(roomDto.getRoomType());
+        if (roomDto.getSharingType() != null) existing.setSharingType(roomDto.getSharingType());
+        if (roomDto.getMonthlyRent() != null) existing.setMonthlyRent(roomDto.getMonthlyRent());
+        if (roomDto.getTotalBeds() != null) existing.setTotalBeds(roomDto.getTotalBeds());
 
-        existing.setRoomNumber(roomDto.getRoomNumber());
-        existing.setRoomType(roomDto.getRoomType());
-        existing.setSharingType(roomDto.getSharingType());
-        existing.setMonthlyRent(roomDto.getMonthlyRent());
-        existing.setTotalBeds(roomDto.getTotalBeds());
-        existing.setFloor(floor);
+        if (roomDto.getFloorId() != null) {
+            Floor floor = floorRepository.findByFloorId(roomDto.getFloorId())
+                    .orElseThrow(() -> new InvalidDataException("Floor not found with ID: " + roomDto.getFloorId()));
+            existing.setFloor(floor);
+        }
         
         if (roomDto.getStatus() != null) {
             existing.setStatus(roomDto.getStatus());

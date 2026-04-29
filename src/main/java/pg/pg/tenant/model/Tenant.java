@@ -94,7 +94,7 @@ public class Tenant extends BaseModel {
                 .address(address)
                 .joinDate(joinDate)
 
-                .bedId(bedId)
+                .bedId(bed != null ? bed.getBedId() : null)
                 .userId(userId != null ? String.valueOf(userId) : null)
 
                 // ===============================
@@ -109,7 +109,7 @@ public class Tenant extends BaseModel {
                 // ===============================
                 .roomId(
                         bed != null && bed.getRoom() != null
-                                ? bed.getRoom().getId()
+                                ? bed.getRoom().getRoomId()
                                 : null
                 )
                 .roomNumber(
@@ -145,7 +145,7 @@ public class Tenant extends BaseModel {
                         bed != null &&
                                 bed.getRoom() != null &&
                                 bed.getRoom().getFloor() != null
-                                ? bed.getRoom().getFloor().getId()
+                                ? bed.getRoom().getFloor().getFloorId()
                                 : null
                 )
                 .floorName(
@@ -164,7 +164,7 @@ public class Tenant extends BaseModel {
                                 bed.getRoom() != null &&
                                 bed.getRoom().getFloor() != null &&
                                 bed.getRoom().getFloor().getBuilding() != null
-                                ? bed.getRoom().getFloor().getBuilding().getId()
+                                ? bed.getRoom().getFloor().getBuilding().getBuildingId()
                                 : null
                 )
                 .buildingName(
@@ -185,7 +185,7 @@ public class Tenant extends BaseModel {
                                 bed.getRoom().getFloor() != null &&
                                 bed.getRoom().getFloor().getBuilding() != null &&
                                 bed.getRoom().getFloor().getBuilding().getLocation() != null
-                                ? bed.getRoom().getFloor().getBuilding().getLocation().getId()
+                                ? bed.getRoom().getFloor().getBuilding().getLocation().getLocationId()
                                 : null
                 )
                 .locationName(

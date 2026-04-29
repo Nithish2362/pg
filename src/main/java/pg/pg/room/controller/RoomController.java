@@ -41,19 +41,19 @@ public class RoomController {
     }
 
     @GetMapping("/{roomId}")
-    public SuccessResponse getRoomById(@PathVariable String roomId) {
+    public SuccessResponse getRoomById(@PathVariable("roomId") String roomId) {
         return new SuccessResponse("Room Fetched Successfully",
                 roomService.getRoomById(roomId));
     }
 
     @PutMapping("/{roomId}")
-    public SuccessResponse updateRoom(@PathVariable String roomId, @RequestBody RoomDto roomDto) {
+    public SuccessResponse updateRoom(@PathVariable("roomId") String roomId, @RequestBody RoomDto roomDto) {
         return new SuccessResponse("Room Updated Successfully",
                 roomService.updateRoom(roomId, roomDto));
     }
 
     @DeleteMapping("/{roomId}")
-    public SuccessResponse deleteRoom(@PathVariable String roomId) {
+    public SuccessResponse deleteRoom(@PathVariable("roomId") String roomId) {
         roomService.deleteRoom(roomId);
         return new SuccessResponse("Room Deleted Successfully", null);
     }

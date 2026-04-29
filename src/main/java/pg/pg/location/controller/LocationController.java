@@ -7,6 +7,7 @@ import pg.pg.location.Dto.LocationDto;
 import pg.pg.location.service.LocationService;
 import pg.pg.utils.Types;
 
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/locations")   // Cleaner mapping
@@ -41,5 +42,17 @@ public class LocationController {
 
         return new SuccessResponse("Locations Fetched Successfully",
                 locationService.getAllPaginatedLocations(searchTerm, status, page, pageSize));
+    }
+
+    @PutMapping("/{locationId}")
+    public SuccessResponse updateLocation(@PathVariable("locationId") String locationId, @RequestBody LocationDto locationDto) {
+        return new SuccessResponse("Location Updated Successfully",
+                locationService.updateLocation(locationId, locationDto));
+    }
+
+    @DeleteMapping("/{locationId}")
+    public SuccessResponse deleteLocation(@PathVariable("locationId") String locationId) {
+        locationService.deleteLocation(locationId);
+        return new SuccessResponse("Location Deleted Successfully", null);
     }
 }

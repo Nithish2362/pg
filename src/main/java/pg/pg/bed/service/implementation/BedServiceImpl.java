@@ -74,12 +74,14 @@ public class BedServiceImpl implements BedService {
         Bed existing = bedRepository.findByBedId(bedId)
                 .orElseThrow(() -> new InvalidDataException("Bed not found with ID: " + bedId));
 
-        Room room = roomRepository.findByRoomId(bedDto.getRoomId())
-                .orElseThrow(() -> new InvalidDataException("Room not found with ID: " + bedDto.getRoomId()));
+        if (bedDto.getBedNumber() != null) existing.setBedNumber(bedDto.getBedNumber());
+        if (bedDto.getIsOccupied() != null) existing.setIsOccupied(bedDto.getIsOccupied());
 
-        existing.setBedNumber(bedDto.getBedNumber());
-        existing.setIsOccupied(bedDto.getIsOccupied());
-        existing.setRoom(room);
+        if (bedDto.getRoomId() != null) {
+            Room room = roomRepository.findByRoomId(bedDto.getRoomId())
+                    .orElseThrow(() -> new InvalidDataException("Room not found with ID: " + bedDto.getRoomId()));
+            existing.setRoom(room);
+        }
         
         if (bedDto.getStatus() != null) {
             existing.setStatus(bedDto.getStatus());

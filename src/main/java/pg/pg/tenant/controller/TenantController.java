@@ -51,7 +51,7 @@ public class TenantController {
     }
 
     @GetMapping("/{tenantId}")
-    public SuccessResponse getById(@PathVariable String tenantId) {
+    public SuccessResponse getById(@PathVariable("tenantId") String tenantId) {
         return new SuccessResponse(
                 "Tenant Fetched Successfully",
                 tenantService.getTenantById(tenantId)
@@ -60,7 +60,7 @@ public class TenantController {
 
     @PutMapping("/{tenantId}")
     public SuccessResponse update(
-            @PathVariable String tenantId,
+            @PathVariable("tenantId") String tenantId,
             @RequestBody TenantDto dto) {
 
         dto.setPgNumber(tenantId);
@@ -72,7 +72,7 @@ public class TenantController {
     }
 
     @PutMapping("/{tenantId}/activate")
-    public SuccessResponse activate(@PathVariable String tenantId) {
+    public SuccessResponse activate(@PathVariable("tenantId") String tenantId) {
 
         tenantService.changeStatus(tenantId, Types.Status.ACTIVE);
 
@@ -85,7 +85,7 @@ public class TenantController {
     // The approve endpoint has been removed as approval is part of the initial creation.
 
     @PutMapping("/{tenantId}/deactivate")
-    public SuccessResponse deactivate(@PathVariable String tenantId) {
+    public SuccessResponse deactivate(@PathVariable("tenantId") String tenantId) {
 
         tenantService.changeStatus(tenantId, Types.Status.INACTIVE);
 

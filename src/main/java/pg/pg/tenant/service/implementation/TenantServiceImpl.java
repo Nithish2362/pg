@@ -44,14 +44,18 @@ public class TenantServiceImpl implements TenantService {
 
         validateTenant(dto);
 
-        if (dto.getPaymentAmount() == null || dto.getPaymentAmount() <= 0) {
-            throw new RuntimeException("Payment not initiated, tenant cannot be created");
+        boolean isUpdate = StringUtils.hasText(dto.getPgNumber());
+
+        if (!isUpdate) {
+            if (dto.getPaymentAmount() == null || dto.getPaymentAmount() <= 0) {
+                throw new RuntimeException("Payment not initiated, tenant cannot be created");
+            }
         }
 
         Tenant tenant = dto.toTenant();
         Bed oldBed = null;
 
-        if (!StringUtils.hasText(dto.getPgNumber())) {
+        if (!isUpdate) {
 
             tenant.setPgNumber(
                     prefixService.createPrefixIfNotPresentAndCreateSequence(
@@ -67,7 +71,7 @@ public class TenantServiceImpl implements TenantService {
         } else {
 
             Tenant old = tenantRepository.findByPgNumber(dto.getPgNumber())
-                    .orElseThrow(() -> new RuntimeException("Tenant not found"));
+                    .orElseThrow(() -> new RuntimeException("Tenant not found with PG Number: " + dto.getPgNumber()));
 
             tenant.setId(old.getId());
             tenant.setJoinDate(old.getJoinDate());
@@ -86,9 +90,13 @@ public class TenantServiceImpl implements TenantService {
             }
         }
 
+        // Try lookup by business ID first, then by primary key (String ID)
         Bed newBed = bedRepository.findByBedId(bedId)
-                .orElseThrow(() -> new RuntimeException("Bed not found"));
+                .orElseGet(() -> bedRepository.findById(bedId).orElse(null));
 
+        if (newBed == null) {
+             throw new RuntimeException("Bed not found with ID: " + bedId);
+        }
 
         // If bed is changed or it's a new tenant
         if (oldBed == null || !oldBed.getBedId().equals(newBed.getBedId())) {

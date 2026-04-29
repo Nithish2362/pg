@@ -10,4 +10,6 @@ public interface LocationService {
     LocationDto createLocation(LocationDto locationDto);
     List<LocationDto> getAllLocations();
     Page<LocationDto> getAllPaginatedLocations(String searchTerm, Types.Status status, int page, int pageSize);
+    LocationDto updateLocation(String locationId, LocationDto locationDto);
+    void deleteLocation(String locationId);
 }

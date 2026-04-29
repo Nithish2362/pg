@@ -57,4 +57,31 @@ public class LocationServiceImpl implements LocationService {
         return locationRepository.findByStatusAndSearch(status, searchTerm, pageable)
                 .map(Location::toLocationDto);
     }
+
+    @Override
+    public LocationDto updateLocation(String locationId, LocationDto locationDto) {
+        Location existing = locationRepository.findByLocationId(locationId)
+                .orElseThrow(() -> new RuntimeException("Location not found with ID: " + locationId));
+
+        if (locationDto.getLocationName() != null) existing.setLocationName(locationDto.getLocationName());
+        if (locationDto.getLocationNumber() != null) existing.setLocationNumber(locationDto.getLocationNumber());
+        if (locationDto.getAddress() != null) existing.setAddress(locationDto.getAddress());
+        if (locationDto.getCity() != null) existing.setCity(locationDto.getCity());
+        if (locationDto.getState() != null) existing.setState(locationDto.getState());
+        if (locationDto.getCountry() != null) existing.setCountry(locationDto.getCountry());
+
+        if (locationDto.getStatus() != null) {
+            existing.setStatus(locationDto.getStatus());
+        }
+
+        Location saved = locationRepository.save(existing);
+        return saved.toLocationDto();
+    }
+
+    @Override
+    public void deleteLocation(String locationId) {
+        Location existing = locationRepository.findByLocationId(locationId)
+                .orElseThrow(() -> new RuntimeException("Location not found with ID: " + locationId));
+        locationRepository.delete(existing);
+    }
 }

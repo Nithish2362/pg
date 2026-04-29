@@ -20,27 +20,27 @@ public class BuildingController {
     }
 
     @GetMapping("/location/{locationId}")
-    public SuccessResponse getBuildingsByLocation(@PathVariable String locationId) {
+    public SuccessResponse getBuildingsByLocation(@PathVariable("locationId") String locationId) {
         return new SuccessResponse("Buildings fetched successfully", buildingService.getBuildingsByLocation(locationId));
     }
 
     @GetMapping("/{buildingId}")
-    public SuccessResponse getBuildingById(@PathVariable String buildingId) {
+    public SuccessResponse getBuildingById(@PathVariable("buildingId") String buildingId) {
         return new SuccessResponse("Building fetched successfully", buildingService.getBuildingById(buildingId));
     }
 
     @PostMapping
-    public SuccessResponse createBuilding(@RequestBody BuildingDto buildingDto, @RequestParam String locationId) {
+    public SuccessResponse createBuilding(@RequestBody BuildingDto buildingDto, @RequestParam("locationId") String locationId) {
         return new SuccessResponse("Building saved successfully", buildingService.createBuilding(buildingDto, locationId));
     }
 
     @PutMapping("/{buildingId}")
-    public SuccessResponse updateBuilding(@PathVariable String buildingId, @RequestBody BuildingDto buildingDto) {
+    public SuccessResponse updateBuilding(@PathVariable("buildingId") String buildingId, @RequestBody BuildingDto buildingDto) {
         return new SuccessResponse("Building updated successfully", buildingService.updateBuilding(buildingId, buildingDto));
     }
 
     @DeleteMapping("/{buildingId}")
-    public SuccessResponse deleteBuilding(@PathVariable String buildingId) {
+    public SuccessResponse deleteBuilding(@PathVariable("buildingId") String buildingId) {
         buildingService.deleteBuilding(buildingId);
         return new SuccessResponse("Building deleted successfully", null);
     }

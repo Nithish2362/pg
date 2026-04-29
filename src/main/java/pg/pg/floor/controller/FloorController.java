@@ -20,27 +20,27 @@ public class FloorController {
     }
 
     @GetMapping("/building/{buildingId}")
-    public SuccessResponse getFloorsByBuilding(@PathVariable String buildingId) {
+    public SuccessResponse getFloorsByBuilding(@PathVariable("buildingId") String buildingId) {
         return new SuccessResponse("Floors fetched successfully", floorService.getFloorsByBuilding(buildingId));
     }
 
     @GetMapping("/{floorId}")
-    public SuccessResponse getFloorById(@PathVariable String floorId) {
+    public SuccessResponse getFloorById(@PathVariable("floorId") String floorId) {
         return new SuccessResponse("Floor fetched successfully", floorService.getFloorById(floorId));
     }
 
     @PostMapping
-    public SuccessResponse createFloor(@RequestBody FloorDto floorDto, @RequestParam String buildingId) {
+    public SuccessResponse createFloor(@RequestBody FloorDto floorDto, @RequestParam("buildingId") String buildingId) {
         return new SuccessResponse("Floor saved successfully", floorService.createFloor(floorDto, buildingId));
     }
 
     @PutMapping("/{floorId}")
-    public SuccessResponse updateFloor(@PathVariable String floorId, @RequestBody FloorDto floorDto) {
+    public SuccessResponse updateFloor(@PathVariable("floorId") String floorId, @RequestBody FloorDto floorDto) {
         return new SuccessResponse("Floor updated successfully", floorService.updateFloor(floorId, floorDto));
     }
 
     @DeleteMapping("/{floorId}")
-    public SuccessResponse deleteFloor(@PathVariable String floorId) {
+    public SuccessResponse deleteFloor(@PathVariable("floorId") String floorId) {
         floorService.deleteFloor(floorId);
         return new SuccessResponse("Floor deleted successfully", null);
     }

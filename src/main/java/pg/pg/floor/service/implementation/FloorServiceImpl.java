@@ -83,13 +83,18 @@ public class FloorServiceImpl implements FloorService {
         Floor existing = floorRepository.findByFloorId(id)
                 .orElseThrow(() -> new InvalidDataException("Floor not found with ID: " + id));
 
-        Building building = buildingRepository.findByBuildingId(floorDto.getBuildingId())
-                .orElseThrow(() -> new InvalidDataException("Building not found with ID: " + floorDto.getBuildingId()));
+        if (floorDto.getFloorName() != null) existing.setFloorName(floorDto.getFloorName());
+        if (floorDto.getFloorNumber() != null) existing.setFloorNumber(floorDto.getFloorNumber());
+        
+        if (floorDto.getBuildingId() != null) {
+            Building building = buildingRepository.findByBuildingId(floorDto.getBuildingId())
+                    .orElseThrow(() -> new InvalidDataException("Building not found with ID: " + floorDto.getBuildingId()));
+            existing.setBuilding(building);
+        }
 
-        existing.setFloorName(floorDto.getFloorName());
-        existing.setFloorNumber(floorDto.getFloorNumber());
-        existing.setBuilding(building);
-        existing.setStatus(floorDto.getStatus());
+        if (floorDto.getStatus() != null) {
+            existing.setStatus(floorDto.getStatus());
+        }
 
         Floor saved = floorRepository.save(existing);
         return saved.toFloorDto();

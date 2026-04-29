@@ -44,25 +44,25 @@ public class BedController {
     }
 
     @GetMapping("/{bedId}")
-    public SuccessResponse getBedById(@PathVariable String bedId) {
+    public SuccessResponse getBedById(@PathVariable("bedId") String bedId) {
         return new SuccessResponse("Bed Fetched Successfully",
                 bedService.getBedById(bedId));
     }
 
     @GetMapping("/room/{roomId}/available")
-    public SuccessResponse getAvailableBeds(@PathVariable String roomId) {
+    public SuccessResponse getAvailableBeds(@PathVariable("roomId") String roomId) {
         return new SuccessResponse("Available Beds Fetched Successfully",
                 bedService.getAvailableBedsByRoom(roomId));
     }
 
     @PutMapping("/{bedId}")
-    public SuccessResponse updateBed(@PathVariable String bedId, @RequestBody BedDto bedDto) {
+    public SuccessResponse updateBed(@PathVariable("bedId") String bedId, @RequestBody BedDto bedDto) {
         return new SuccessResponse("Bed Updated Successfully",
                 bedService.updateBed(bedId, bedDto));
     }
 
     @DeleteMapping("/{bedId}")
-    public SuccessResponse deleteBed(@PathVariable String bedId) {
+    public SuccessResponse deleteBed(@PathVariable("bedId") String bedId) {
         bedService.deleteBed(bedId);
         return new SuccessResponse("Bed Deleted Successfully", null);
     }
