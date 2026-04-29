@@ -46,8 +46,7 @@ public class TenantController {
         return new SuccessResponse(
                 "Tenants Fetched Successfully",
                 tenantService.getAllPaginatedTenants(
-                        searchTerm, status, page, pageSize
-                )
+                        searchTerm, status, page, pageSize)
         );
     }
 
