@@ -35,7 +35,7 @@ public class DashboardService {
             .sum();
 
         long availableBeds = bedRepository.findAll().stream()
-            .filter(b -> "AVAILABLE".equals(b.getStatus())).count();
+            .filter(b -> !b.getIsOccupied() && b.getStatus() == Types.Status.ACTIVE).count();
 
         long openComplaints = complaintRepository.findAll().stream()
             .filter(c -> "OPEN".equals(c.getStatus())).count();
