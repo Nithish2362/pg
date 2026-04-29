@@ -25,4 +25,6 @@ public interface TenantService {
     TenantDto getTenantById(String pgNumber);
 
     void changeStatus(String pgNumber, Types.Status status);
+
+    void approveTenant(String pgNumber);
 }

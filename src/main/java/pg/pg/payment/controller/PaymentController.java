@@ -1,9 +1,12 @@
+// ===============================================
+// PaymentController.java
+// ===============================================
 package pg.pg.payment.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
-import pg.pg.payment.model.Payment;
+import pg.pg.payment.dto.PaymentDto;
 import pg.pg.payment.service.PaymentService;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -16,27 +19,57 @@ public class PaymentController {
 
     @GetMapping
     public SuccessResponse getAllPayments() {
-        return new SuccessResponse("Payments fetched successfully", paymentService.getAllPayments());
+        return new SuccessResponse(
+                "Payments fetched successfully",
+                paymentService.getAllPayments()
+        );
     }
 
     @GetMapping("/tenant/{tenantId}")
-    public SuccessResponse getPaymentsByTenant(@PathVariable Long tenantId) {
-        return new SuccessResponse("Payments fetched successfully", paymentService.getPaymentsByTenant(tenantId));
+    public SuccessResponse getPaymentsByTenant(@PathVariable String tenantId) {
+        return new SuccessResponse(
+                "Payments fetched successfully",
+                paymentService.getPaymentsByTenant(tenantId)
+        );
+    }
+
+    @GetMapping("/{id}")
+    public SuccessResponse getPaymentById(@PathVariable Long id) {
+        return new SuccessResponse(
+                "Payment fetched successfully",
+                paymentService.getPaymentById(id)
+        );
     }
 
     @PostMapping
-    public SuccessResponse createPayment(@RequestBody Payment payment, @RequestParam Long tenantId) {
-        return new SuccessResponse("Payment saved successfully", paymentService.createPayment(payment, tenantId));
+    public SuccessResponse createPayment(
+            @RequestBody PaymentDto dto,
+            @RequestParam String tenantId
+    ) {
+        return new SuccessResponse(
+                "Payment saved successfully",
+                paymentService.createPayment(dto, tenantId)
+        );
     }
 
     @PutMapping("/{id}")
-    public SuccessResponse updatePayment(@PathVariable Long id, @RequestBody Payment payment) {
-        return new SuccessResponse("Payment updated successfully", paymentService.updatePayment(id, payment));
+    public SuccessResponse updatePayment(
+            @PathVariable Long id,
+            @RequestBody PaymentDto dto
+    ) {
+        return new SuccessResponse(
+                "Payment updated successfully",
+                paymentService.updatePayment(id, dto)
+        );
     }
 
     @DeleteMapping("/{id}")
     public SuccessResponse deletePayment(@PathVariable Long id) {
         paymentService.deletePayment(id);
-        return new SuccessResponse("Payment deleted successfully", null);
+
+        return new SuccessResponse(
+                "Payment deleted successfully",
+                null
+        );
     }
 }

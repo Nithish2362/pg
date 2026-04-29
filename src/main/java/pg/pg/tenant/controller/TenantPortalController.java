@@ -5,6 +5,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
+import pg.pg.payment.dto.PaymentDto;
 import pg.pg.payment.model.Payment;
 import pg.pg.payment.service.PaymentService;
 import pg.pg.tenant.dto.TenantDto;
@@ -71,7 +72,7 @@ public class TenantPortalController {
         dashboard.put("joinDate", tenant.getJoinDate());
         dashboard.put("bedId", tenant.getBedId());
 
-        List<Payment> payments =
+        List<PaymentDto> payments =
                 paymentService.getPaymentsByTenant(tenant.getUserId());
 
         dashboard.put("recentPayments", payments.stream().limit(3).toList());

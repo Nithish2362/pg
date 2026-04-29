@@ -7,7 +7,7 @@ public class Types {
         ARTICLESKU,VARIANTSKU,LOCATION,BUILDING ,FLOOR,ROOM,BED}
 
     public enum Status {
-        ACTIVE, INACTIVE
+        ACTIVE, INACTIVE, NOT_APPROVED
     }
 
     public enum OrderStatus {

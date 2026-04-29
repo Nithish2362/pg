@@ -8,4 +8,9 @@ INSERT INTO features (id, name, parent_id, order_by, path, icon, default_child_i
 ('3-2', 'Rooms', '3', 2, '/rooms', 'meeting_room', NULL),
 ('4', 'Tenants', NULL, 4, '/tenants', 'people', '4-1'),
 ('4-1', 'Active Tenants', '4', 1, '/tenants', 'person', NULL),
-('4-2', 'Payments', '4', 2, '/payments', 'payments', NULL);
+('4-2', 'Payments', '4', 2, '/payments', 'payments', NULL),
+('5', 'Support', NULL, 5, '/complaints', 'support_agent', '5-1'),
+('5-1', 'Complaints', '5', 1, '/complaints', 'report_problem', NULL),
+('5-2', 'Notices', '5', 2, '/notices', 'campaign', NULL),
+('6', 'Tenant Logs', NULL, 6, '/logs', 'history', NULL),
+('7', 'Visitor Pass', NULL, 7, '/visitors', 'badge', NULL);

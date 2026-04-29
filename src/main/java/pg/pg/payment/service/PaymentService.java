@@ -1,14 +1,23 @@
+// ===============================================
+// PaymentService.java
+// ===============================================
 package pg.pg.payment.service;
 
-import pg.pg.payment.model.Payment;
+import pg.pg.payment.dto.PaymentDto;
+
 import java.util.List;
-import java.util.Optional;
 
 public interface PaymentService {
-    List<Payment> getAllPayments();
-    List<Payment> getPaymentsByTenant(Long tenantId);
-    Optional<Payment> getPaymentById(Long id);
-    Payment createPayment(Payment payment, Long tenantId);
-    Payment updatePayment(Long id, Payment paymentDetails);
+
+    List<PaymentDto> getAllPayments();
+
+    List<PaymentDto> getPaymentsByTenant(String tenantId);
+
+    PaymentDto getPaymentById(Long id);
+
+    PaymentDto createPayment(PaymentDto dto, String tenantId);
+
+    PaymentDto updatePayment(Long id, PaymentDto dto);
+
     void deletePayment(Long id);
 }

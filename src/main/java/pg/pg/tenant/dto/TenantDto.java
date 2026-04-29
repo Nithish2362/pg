@@ -3,7 +3,6 @@
 // ===============================
 package pg.pg.tenant.dto;
 
-
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import pg.pg.tenant.model.Tenant;
@@ -38,7 +37,32 @@ public class TenantDto extends BaseDto {
     private LocalDate joinDate;
 
     private String bedId;
-    private Long userId;
+    private String userId;
+
+    // ===============================
+    // Extra Display Fields
+    // ===============================
+    private String bedNumber;
+
+    private String roomId;
+    private String roomNumber;
+    private String roomName;
+    private String roomType;
+    private Integer sharingType;
+    private Double monthlyRent;
+
+    private String floorId;
+    private String floorName;
+
+    private String buildingId;
+    private String buildingName;
+
+    private String locationId;
+    private String locationName;
+
+    // Payment fields for initial creation
+    private Double paymentAmount;
+    private String paymentMode;
 
     public Tenant toTenant() {
         return Tenant.builder()

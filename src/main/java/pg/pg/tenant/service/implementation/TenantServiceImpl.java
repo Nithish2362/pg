@@ -20,6 +20,9 @@ import pg.pg.user.model.User;
 import pg.pg.user.repository.UserRepository;
 import pg.pg.utils.Types;
 
+import pg.pg.payment.model.Payment;
+import pg.pg.payment.repository.PaymentRepository;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,11 +37,16 @@ public class TenantServiceImpl implements TenantService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final PrefixService prefixService;
+    private final PaymentRepository paymentRepository;
 
     @Override
     public TenantDto createTenant(TenantDto dto, String bedId) {
 
         validateTenant(dto);
+
+        if (dto.getPaymentAmount() == null || dto.getPaymentAmount() <= 0) {
+            throw new RuntimeException("Payment not initiated, tenant cannot be created");
+        }
 
         Tenant tenant = dto.toTenant();
         Bed oldBed = null;
@@ -53,6 +61,7 @@ public class TenantServiceImpl implements TenantService {
             );
 
             tenant.setJoinDate(LocalDate.now());
+            // Tenant is immediately active because payment was collected
             tenant.setStatus(Types.Status.ACTIVE);
 
         } else {
@@ -115,7 +124,41 @@ public class TenantServiceImpl implements TenantService {
             tenant.setUser(userRepository.save(user));
         }
 
-        return tenantRepository.save(tenant).toTenantDto();
+        tenant = tenantRepository.save(tenant);
+
+        // If it's a new tenant creation (pgNumber was initially empty), record the payment
+        if (!StringUtils.hasText(dto.getPgNumber())) {
+            Double amount = dto.getPaymentAmount();
+            Double monthlyRent = newBed.getRoom() != null ? newBed.getRoom().getMonthlyRent() : 0.0;
+            
+            String paymentStatus = "PENDING";
+            if (amount > 0 && amount < monthlyRent) {
+                paymentStatus = "PARTIALLY PAID";
+            } else if (amount >= monthlyRent && monthlyRent > 0) {
+                paymentStatus = "PAID";
+            } else if (amount > 0) {
+                paymentStatus = "PAID";
+            }
+            
+            LocalDate now = LocalDate.now();
+            String currentMonth = now.getMonth().name().substring(0, 1).toUpperCase() + 
+                                  now.getMonth().name().substring(1).toLowerCase();
+
+            Payment payment = Payment.builder()
+                    .tenant(tenant)
+                    .amount(amount)
+                    .paymentDate(now)
+                    .paymentMonth(currentMonth)
+                    .paymentYear(now.getYear())
+                    .paymentMode(dto.getPaymentMode() != null ? dto.getPaymentMode() : "CASH")
+                    .status(paymentStatus)
+                    .remarks("Advance payment at registration")
+                    .build();
+
+            paymentRepository.save(payment);
+        }
+
+        return tenant.toTenantDto();
     }
 
     @Override
@@ -166,6 +209,12 @@ public class TenantServiceImpl implements TenantService {
         }
 
         tenantRepository.save(tenant);
+    }
+
+    @Override
+    public void approveTenant(String pgNumber) {
+        // Obsolete: Approval is now part of the payment-first creation flow.
+        throw new UnsupportedOperationException("approveTenant is no longer supported.");
     }
 
     private void validateTenant(TenantDto dto) {

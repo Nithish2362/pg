@@ -83,6 +83,8 @@ public class TenantController {
         );
     }
 
+    // The approve endpoint has been removed as approval is part of the initial creation.
+
     @PutMapping("/{tenantId}/deactivate")
     public SuccessResponse deactivate(@PathVariable String tenantId) {
 

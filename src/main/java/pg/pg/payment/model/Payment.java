@@ -1,27 +1,32 @@
+// ===============================================
+// Payment.java
+// ===============================================
 package pg.pg.payment.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.*;
+import pg.pg.payment.dto.PaymentDto;
 import pg.pg.tenant.model.Tenant;
 
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "payments")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    // Tenant primary key is String from BaseModel
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id", nullable = false)
-    @JsonIgnore
     private Tenant tenant;
-
-    @Column(name = "tenant_id", insertable = false, updatable = false)
-    private String tenantId;
-
 
     @Column(nullable = false)
     private Double amount;
@@ -30,48 +35,31 @@ public class Payment {
     private LocalDate paymentDate;
 
     @Column(nullable = false)
-    private String paymentMonth; // e.g. "January"
+    private String paymentMonth;
 
     @Column(nullable = false)
     private Integer paymentYear;
 
-    private String paymentMode; // CASH, UPI, BANK_TRANSFER
+    private String paymentMode;
 
     @Column(nullable = false)
-    private String status; // PAID, PENDING
+    private String status;
 
     private String remarks;
 
-    public Payment() {}
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public Tenant getTenant() { return tenant; }
-    public void setTenant(Tenant tenant) { this.tenant = tenant; }
-
-    public String getTenantId() { return tenantId; }
-    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
-
-
-    public Double getAmount() { return amount; }
-    public void setAmount(Double amount) { this.amount = amount; }
-
-    public LocalDate getPaymentDate() { return paymentDate; }
-    public void setPaymentDate(LocalDate paymentDate) { this.paymentDate = paymentDate; }
-
-    public String getPaymentMonth() { return paymentMonth; }
-    public void setPaymentMonth(String paymentMonth) { this.paymentMonth = paymentMonth; }
-
-    public Integer getPaymentYear() { return paymentYear; }
-    public void setPaymentYear(Integer paymentYear) { this.paymentYear = paymentYear; }
-
-    public String getPaymentMode() { return paymentMode; }
-    public void setPaymentMode(String paymentMode) { this.paymentMode = paymentMode; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    public String getRemarks() { return remarks; }
-    public void setRemarks(String remarks) { this.remarks = remarks; }
+    public PaymentDto toDto() {
+        return PaymentDto.builder()
+                .id(id)
+                .tenantId(tenant != null ? tenant.getId() : null)
+                .tenantPgNumber(tenant != null ? tenant.getPgNumber() : null)
+                .tenantName(tenant != null ? tenant.getStudentName() : null)
+                .amount(amount)
+                .paymentDate(paymentDate)
+                .paymentMonth(paymentMonth)
+                .paymentYear(paymentYear)
+                .paymentMode(paymentMode)
+                .status(status)
+                .remarks(remarks)
+                .build();
+    }
 }

@@ -57,11 +57,15 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()   // Preflight
-                        .requestMatchers("/api/auth/**").permitAll()             // ← Most important: put early
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/tenant/**").hasRole("TENANT")
+                        // Shared endpoints - accessible by both ADMIN and TENANT
+                        .requestMatchers("/api/complaints/**").authenticated()
+                        .requestMatchers("/api/notices/**").authenticated()
+                        .requestMatchers("/api/tenant-logs/**").authenticated()
                         .anyRequest().authenticated()
                 );
 

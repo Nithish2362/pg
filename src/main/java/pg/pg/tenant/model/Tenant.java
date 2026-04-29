@@ -51,6 +51,9 @@ public class Tenant extends BaseModel {
 
     private LocalDate joinDate;
 
+    // ===============================
+    // Bed Relation
+    // ===============================
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bed_id")
     private Bed bed;
@@ -58,6 +61,9 @@ public class Tenant extends BaseModel {
     @Column(name = "bed_id", insertable = false, updatable = false)
     private String bedId;
 
+    // ===============================
+    // User Relation
+    // ===============================
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -66,23 +72,132 @@ public class Tenant extends BaseModel {
     private Long userId;
 
     public TenantDto toTenantDto() {
+
         return TenantDto.builder()
+                .id(getId())
                 .pgNumber(pgNumber)
                 .studentName(studentName)
                 .mobileNumber(mobileNumber)
+
                 .fatherName(fatherName)
                 .fatherMobile(fatherMobile)
+
                 .motherName(motherName)
                 .motherMobile(motherMobile)
+
                 .guardianName(guardianName)
                 .guardianAge(guardianAge)
                 .guardianMobile(guardianMobile)
+
                 .email(email)
                 .dob(dob)
                 .address(address)
                 .joinDate(joinDate)
+
                 .bedId(bedId)
-                .userId(userId)
+                .userId(userId != null ? String.valueOf(userId) : null)
+
+                // ===============================
+                // Bed Details
+                // ===============================
+                .bedNumber(
+                        bed != null ? bed.getBedNumber() : null
+                )
+
+                // ===============================
+                // Room Details
+                // ===============================
+                .roomId(
+                        bed != null && bed.getRoom() != null
+                                ? bed.getRoom().getId()
+                                : null
+                )
+                .roomNumber(
+                        bed != null && bed.getRoom() != null
+                                ? bed.getRoom().getRoomNumber()
+                                : null
+                )
+                .roomName(
+                        bed != null && bed.getRoom() != null
+                                ? bed.getRoom().getRoomNumber()
+                                : null
+                )
+                .roomType(
+                        bed != null && bed.getRoom() != null
+                                ? bed.getRoom().getRoomType()
+                                : null
+                )
+                .sharingType(
+                        bed != null && bed.getRoom() != null
+                                ? bed.getRoom().getSharingType()
+                                : null
+                )
+                .monthlyRent(
+                        bed != null && bed.getRoom() != null
+                                ? bed.getRoom().getMonthlyRent()
+                                : null
+                )
+
+                // ===============================
+                // Floor Details
+                // ===============================
+                .floorId(
+                        bed != null &&
+                                bed.getRoom() != null &&
+                                bed.getRoom().getFloor() != null
+                                ? bed.getRoom().getFloor().getId()
+                                : null
+                )
+                .floorName(
+                        bed != null &&
+                                bed.getRoom() != null &&
+                                bed.getRoom().getFloor() != null
+                                ? bed.getRoom().getFloor().getFloorName()
+                                : null
+                )
+
+                // ===============================
+                // Building Details
+                // ===============================
+                .buildingId(
+                        bed != null &&
+                                bed.getRoom() != null &&
+                                bed.getRoom().getFloor() != null &&
+                                bed.getRoom().getFloor().getBuilding() != null
+                                ? bed.getRoom().getFloor().getBuilding().getId()
+                                : null
+                )
+                .buildingName(
+                        bed != null &&
+                                bed.getRoom() != null &&
+                                bed.getRoom().getFloor() != null &&
+                                bed.getRoom().getFloor().getBuilding() != null
+                                ? bed.getRoom().getFloor().getBuilding().getBuildingName()
+                                : null
+                )
+
+                // ===============================
+                // Location Details
+                // ===============================
+                .locationId(
+                        bed != null &&
+                                bed.getRoom() != null &&
+                                bed.getRoom().getFloor() != null &&
+                                bed.getRoom().getFloor().getBuilding() != null &&
+                                bed.getRoom().getFloor().getBuilding().getLocation() != null
+                                ? bed.getRoom().getFloor().getBuilding().getLocation().getId()
+                                : null
+                )
+                .locationName(
+                        bed != null &&
+                                bed.getRoom() != null &&
+                                bed.getRoom().getFloor() != null &&
+                                bed.getRoom().getFloor().getBuilding() != null &&
+                                bed.getRoom().getFloor().getBuilding().getLocation() != null
+                                ? bed.getRoom().getFloor().getBuilding().getLocation().getLocationName()
+                                : null
+                )
+
                 .status(getStatus())
                 .build();
     }
