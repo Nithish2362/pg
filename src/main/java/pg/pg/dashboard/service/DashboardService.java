@@ -10,6 +10,7 @@ import pg.pg.payment.model.Payment;
 import pg.pg.payment.repository.PaymentRepository;
 import pg.pg.tenant.repository.TenantRepository;
 import pg.pg.tenantlog.repository.TenantLogRepository;
+import pg.pg.utils.Types;
 
 import java.util.List;
 
