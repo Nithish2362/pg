@@ -47,6 +47,11 @@ public class Payment {
 
     private String remarks;
 
+    private String receiptNo;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private Boolean isApproved = false;
+
     public PaymentDto toDto() {
         return PaymentDto.builder()
                 .id(id)
@@ -60,6 +65,8 @@ public class Payment {
                 .paymentMode(paymentMode)
                 .status(status)
                 .remarks(remarks)
+                .receiptNo(receiptNo)
+                .isApproved(isApproved)
                 .build();
     }
 }

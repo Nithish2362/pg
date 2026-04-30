@@ -23,13 +23,16 @@ public class TenantDto extends BaseDto {
 
     private String fatherName;
     private String fatherMobile;
+    private String fatherEmail;
 
     private String motherName;
     private String motherMobile;
+    private String motherEmail;
 
     private String guardianName;
     private Integer guardianAge;
     private String guardianMobile;
+    private String guardianEmail;
 
     private String email;
     private LocalDate dob;
@@ -71,11 +74,14 @@ public class TenantDto extends BaseDto {
                 .mobileNumber(mobileNumber)
                 .fatherName(fatherName)
                 .fatherMobile(fatherMobile)
+                .fatherEmail(fatherEmail)
                 .motherName(motherName)
                 .motherMobile(motherMobile)
+                .motherEmail(motherEmail)
                 .guardianName(guardianName)
                 .guardianAge(guardianAge)
                 .guardianMobile(guardianMobile)
+                .guardianEmail(guardianEmail)
                 .email(email)
                 .dob(dob)
                 .address(address)

@@ -78,4 +78,14 @@ public class EmailService {
 
         CompletableFuture.runAsync(() -> sendEmail(to, subject, body));
     }
+
+    public void sendNotification(String to, String subject, String message) {
+        String body = "<html><body>" +
+                "<h3>" + subject + "</h3>" +
+                "<p>" + message.replace("\n", "<br>") + "</p>" +
+                "<br><p>Best regards,<br>Happy Stay Management</p>" +
+                "</body></html>";
+
+        CompletableFuture.runAsync(() -> sendEmail(to, subject, body));
+    }
 }

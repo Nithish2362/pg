@@ -50,7 +50,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentDto createPayment(PaymentDto dto, String tenantId) {
 
-        Tenant tenant = tenantRepository.findById(Long.valueOf(tenantId))
+        Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
         Double amount = dto.getAmount() != null ? dto.getAmount() : 0.0;
@@ -60,11 +60,10 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         String status = "PENDING";
-        if (amount > 0 && amount < monthlyRent) {
-            status = "PARTIALLY PAID";
-        } else if (amount >= monthlyRent && monthlyRent > 0) {
+        if (amount >= monthlyRent && monthlyRent > 0) {
             status = "PAID";
-        } else if (amount > 0) {
+        } else if (amount > 0 && monthlyRent == 0) {
+            // This case handles initial advance/deposit which might not have a monthlyRent context
             status = "PAID";
         }
 
@@ -77,6 +76,8 @@ public class PaymentServiceImpl implements PaymentService {
                 .paymentMode(dto.getPaymentMode())
                 .status(status)
                 .remarks(dto.getRemarks())
+                .receiptNo(dto.getReceiptNo())
+                .isApproved(dto.getIsApproved() != null ? dto.getIsApproved() : false)
                 .build();
 
         return paymentRepository.save(payment).toDto();
@@ -95,11 +96,9 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         String status = "PENDING";
-        if (amount > 0 && amount < monthlyRent) {
-            status = "PARTIALLY PAID";
-        } else if (amount >= monthlyRent && monthlyRent > 0) {
+        if (amount >= monthlyRent && monthlyRent > 0) {
             status = "PAID";
-        } else if (amount > 0) {
+        } else if (amount > 0 && monthlyRent == 0) {
             status = "PAID";
         }
 
@@ -110,6 +109,10 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setPaymentMode(dto.getPaymentMode());
         payment.setStatus(status);
         payment.setRemarks(dto.getRemarks());
+        payment.setReceiptNo(dto.getReceiptNo());
+        if (dto.getIsApproved() != null) {
+            payment.setIsApproved(dto.getIsApproved());
+        }
 
         return paymentRepository.save(payment).toDto();
     }

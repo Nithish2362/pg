@@ -29,4 +29,6 @@ public class PaymentDto {
     private String paymentMode;
     private String status;
     private String remarks;
+    private String receiptNo;
+    private Boolean isApproved;
 }

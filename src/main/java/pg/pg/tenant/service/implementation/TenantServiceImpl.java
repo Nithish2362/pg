@@ -47,11 +47,12 @@ public class TenantServiceImpl implements TenantService {
 
         boolean isUpdate = StringUtils.hasText(dto.getPgNumber());
 
-        if (!isUpdate) {
-            if (dto.getPaymentAmount() == null || dto.getPaymentAmount() <= 0) {
-                throw new RuntimeException("Payment not initiated, tenant cannot be created");
-            }
-        }
+        // Allow creation even with 0 payment, as per user requirement to show them in 'Unpaid' tab.
+        // if (!isUpdate) {
+        //     if (dto.getPaymentAmount() == null || dto.getPaymentAmount() <= 0) {
+        //         throw new RuntimeException("Payment not initiated, tenant cannot be created");
+        //     }
+        // }
 
         Tenant tenant = dto.toTenant();
         Bed oldBed = null;
@@ -147,11 +148,7 @@ public class TenantServiceImpl implements TenantService {
             Double monthlyRent = newBed.getRoom() != null ? newBed.getRoom().getMonthlyRent() : 0.0;
             
             String paymentStatus = "PENDING";
-            if (amount > 0 && amount < monthlyRent) {
-                paymentStatus = "PARTIALLY PAID";
-            } else if (amount >= monthlyRent && monthlyRent > 0) {
-                paymentStatus = "PAID";
-            } else if (amount > 0) {
+            if (amount > 0) {
                 paymentStatus = "PAID";
             }
             
@@ -168,6 +165,8 @@ public class TenantServiceImpl implements TenantService {
                     .paymentMode(dto.getPaymentMode() != null ? dto.getPaymentMode() : "CASH")
                     .status(paymentStatus)
                     .remarks("Advance payment at registration")
+                    .isApproved(false)
+                    .receiptNo(amount > 0 ? "REC-PG-" + String.valueOf(System.currentTimeMillis()).substring(7) : null)
                     .build();
 
             paymentRepository.save(payment);

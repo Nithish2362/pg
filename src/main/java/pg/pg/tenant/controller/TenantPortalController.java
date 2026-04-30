@@ -12,6 +12,9 @@ import pg.pg.tenant.dto.TenantDto;
 import pg.pg.tenant.service.TenantService;
 import pg.pg.user.model.User;
 import pg.pg.user.repository.UserRepository;
+import pg.pg.common.service.NotificationService;
+import pg.pg.tenant.model.Tenant;
+import pg.pg.tenant.repository.TenantRepository;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +29,8 @@ public class TenantPortalController {
     private final TenantService tenantService;
     private final PaymentService paymentService;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final TenantRepository tenantRepository;
 
     @GetMapping("/profile")
     public SuccessResponse getProfile() {
@@ -83,17 +88,38 @@ public class TenantPortalController {
 
     @GetMapping("/payments")
     public SuccessResponse getPayments() {
-
         TenantDto tenant = getCurrentTenant();
-
         if (tenant == null) {
             return new SuccessResponse("Tenant not found", null);
         }
-
         return new SuccessResponse(
                 "Payments fetched successfully",
                 paymentService.getPaymentsByTenant(tenant.getUserId())
         );
+    }
+
+    @PostMapping("/leave-request")
+    public SuccessResponse requestLeave(@RequestBody Map<String, String> payload) {
+        String reason = payload.getOrDefault("reason", "Going Home");
+        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByUsername(auth.getName()).orElse(null);
+        
+        if (user == null) {
+            return new SuccessResponse("User not found", null);
+        }
+
+        Tenant tenant = tenantRepository.findByUserId(user.getId()).orElse(null);
+        if (tenant == null) {
+            return new SuccessResponse("Tenant details not found", null);
+        }
+
+        String message = String.format("Dear Parent,\nThis is to inform you that %s has requested leave from %s to %s.\nPlease take note of this request.\nThank you.", 
+                tenant.getStudentName(), payload.getOrDefault("startDate", "today"), payload.getOrDefault("endDate", "a future date"));
+        
+        notificationService.sendToParents(tenant, message, "Leave Request Notification");
+
+        return new SuccessResponse("Leave request sent to parents successfully", null);
     }
 
     private TenantDto getCurrentTenant() {

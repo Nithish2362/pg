@@ -13,7 +13,7 @@ import pg.pg.utils.Types;
 
 import java.util.Optional;
 
-public interface TenantRepository extends JpaRepository<Tenant, Long> {
+public interface TenantRepository extends JpaRepository<Tenant, String> {
 
     Optional<Tenant> findByPgNumber(String pgNumber);
 

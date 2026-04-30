@@ -33,13 +33,16 @@ public class Tenant extends BaseModel {
 
     private String fatherName;
     private String fatherMobile;
+    private String fatherEmail;
 
     private String motherName;
     private String motherMobile;
+    private String motherEmail;
 
     private String guardianName;
     private Integer guardianAge;
     private String guardianMobile;
+    private String guardianEmail;
 
     @Column(nullable = false)
     private String email;
@@ -81,13 +84,16 @@ public class Tenant extends BaseModel {
 
                 .fatherName(fatherName)
                 .fatherMobile(fatherMobile)
+                .fatherEmail(fatherEmail)
 
                 .motherName(motherName)
                 .motherMobile(motherMobile)
+                .motherEmail(motherEmail)
 
                 .guardianName(guardianName)
                 .guardianAge(guardianAge)
                 .guardianMobile(guardianMobile)
+                .guardianEmail(guardianEmail)
 
                 .email(email)
                 .dob(dob)
