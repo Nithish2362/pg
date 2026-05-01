@@ -54,6 +54,9 @@ public class Tenant extends BaseModel {
 
     private LocalDate joinDate;
 
+    private java.time.LocalDateTime rentStartDate;
+    private java.time.LocalDateTime rentEndDate;
+
     // ===============================
     // Bed Relation
     // ===============================
@@ -99,6 +102,8 @@ public class Tenant extends BaseModel {
                 .dob(dob)
                 .address(address)
                 .joinDate(joinDate)
+                .rentStartDate(rentStartDate)
+                .rentEndDate(rentEndDate)
 
                 .bedId(bed != null ? bed.getBedId() : null)
                 .userId(userId != null ? String.valueOf(userId) : null)

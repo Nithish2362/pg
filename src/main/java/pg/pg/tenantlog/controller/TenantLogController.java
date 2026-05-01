@@ -1,9 +1,15 @@
 package pg.pg.tenantlog.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
+import pg.pg.tenantlog.dto.TenantLogDto;
 import pg.pg.tenantlog.service.TenantLogService;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,5 +40,19 @@ public class TenantLogController {
     @GetMapping
     public SuccessResponse getAll() {
         return new SuccessResponse("All logs fetched", tenantLogService.getAll());
+    }
+
+    @GetMapping("/view")
+    public SuccessResponse getPaginatedLogs(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String searchTerm
+    ) {
+        Page<TenantLogDto> logPage = tenantLogService.getAllPaginatedLogs(status, searchTerm, PageRequest.of(page, pageSize));
+        Map<String, Object> data = new HashMap<>();
+        data.put("response", logPage.getContent());
+        data.put("count", logPage.getTotalElements());
+        return new SuccessResponse("Paginated logs fetched", data);
     }
 }

@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
 import pg.pg.floor.dto.FloorDto;
 import pg.pg.floor.service.FloorService;
+import pg.pg.utils.Types;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -17,6 +18,22 @@ public class FloorController {
     @GetMapping
     public SuccessResponse getAllFloors() {
         return new SuccessResponse("Floors fetched successfully", floorService.getAllFloors());
+    }
+
+    @GetMapping("/view")
+    public SuccessResponse getPaginated(
+            @RequestParam int page,
+            @RequestParam int pageSize,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(defaultValue = "ACTIVE") Types.Status status) {
+
+        org.springframework.data.domain.Page<FloorDto> result = floorService.getAllPaginatedFloors(
+                searchTerm, status, page, pageSize);
+        return new SuccessResponse(
+                "Floors Fetched Successfully",
+                result.getContent(),
+                result.getTotalElements()
+        );
     }
 
     @GetMapping("/building/{buildingId}")

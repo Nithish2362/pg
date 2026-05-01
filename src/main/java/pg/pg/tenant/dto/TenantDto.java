@@ -39,6 +39,9 @@ public class TenantDto extends BaseDto {
     private String address;
     private LocalDate joinDate;
 
+    private java.time.LocalDateTime rentStartDate;
+    private java.time.LocalDateTime rentEndDate;
+
     private String bedId;
     private String userId;
 
@@ -86,6 +89,8 @@ public class TenantDto extends BaseDto {
                 .dob(dob)
                 .address(address)
                 .joinDate(joinDate)
+                .rentStartDate(rentStartDate)
+                .rentEndDate(rentEndDate)
                 .status(getStatus())
                 .build();
     }

@@ -48,11 +48,12 @@ public class TenantServiceImpl implements TenantService {
         boolean isUpdate = StringUtils.hasText(dto.getPgNumber());
 
         // Allow creation even with 0 payment, as per user requirement to show them in 'Unpaid' tab.
-        // if (!isUpdate) {
-        //     if (dto.getPaymentAmount() == null || dto.getPaymentAmount() <= 0) {
-        //         throw new RuntimeException("Payment not initiated, tenant cannot be created");
-        //     }
-        // }
+        // But user requested to only allow if advance payment > 0.
+         if (!isUpdate) {
+             if (dto.getPaymentAmount() == null || dto.getPaymentAmount() <= 0) {
+                 throw new RuntimeException("Advance payment is mandatory to register a tenant.");
+             }
+         }
 
         Tenant tenant = dto.toTenant();
         Bed oldBed = null;
@@ -67,8 +68,11 @@ public class TenantServiceImpl implements TenantService {
             );
 
             tenant.setJoinDate(LocalDate.now());
-            // Tenant is immediately active because payment was collected
-            tenant.setStatus(Types.Status.ACTIVE);
+            // Tenant is Awaiting Activation (NOT_APPROVED) until advance is approved
+            tenant.setStatus(Types.Status.NOT_APPROVED);
+            // Save custom rent period if provided
+            tenant.setRentStartDate(dto.getRentStartDate());
+            tenant.setRentEndDate(dto.getRentEndDate());
 
         } else {
 
@@ -78,6 +82,9 @@ public class TenantServiceImpl implements TenantService {
             tenant.setId(old.getId());
             tenant.setJoinDate(old.getJoinDate());
             tenant.setStatus(old.getStatus());
+            // Preserve or update rent period
+            tenant.setRentStartDate(dto.getRentStartDate() != null ? dto.getRentStartDate() : old.getRentStartDate());
+            tenant.setRentEndDate(dto.getRentEndDate() != null ? dto.getRentEndDate() : old.getRentEndDate());
             oldBed = old.getBed();
             
             User user = old.getUser();
@@ -142,6 +149,19 @@ public class TenantServiceImpl implements TenantService {
 
         tenant = tenantRepository.save(tenant);
 
+        // If bed changed, update any PENDING rent payment for this tenant to new room's rent
+        if (newBed != null && (oldBed == null || !newBed.getBedId().equals(oldBed.getBedId()))) {
+            Double newRent = newBed.getRoom() != null ? newBed.getRoom().getMonthlyRent() : 0.0;
+            // Find PENDING RENT payments for this tenant
+            paymentRepository.findByTenant(tenant).stream()
+                .filter(p -> "RENT".equals(p.getPaymentType()) && "PENDING".equals(p.getStatus()))
+                .forEach(p -> {
+                    p.setRentAmount(newRent);
+                    p.setRemarks("Room changed: " + (newBed.getRoom() != null ? newBed.getRoom().getRoomNumber() : "N/A"));
+                    paymentRepository.save(p);
+                });
+        }
+
         // If it's a new tenant creation (pgNumber was initially empty), record the payment
         if (!StringUtils.hasText(dto.getPgNumber())) {
             Double amount = dto.getPaymentAmount();
@@ -156,20 +176,26 @@ public class TenantServiceImpl implements TenantService {
             String currentMonth = now.getMonth().name().substring(0, 1).toUpperCase() + 
                                   now.getMonth().name().substring(1).toLowerCase();
 
-            Payment payment = Payment.builder()
+            // 1. Create Advance Payment Record
+            Payment advancePayment = Payment.builder()
                     .tenant(tenant)
-                    .amount(amount)
+                    .amount(amount) 
+                    .advancePaymentAmount(amount)
+                    .advancePaymentDone(false)
+                    .rentAmount(0.0)
+                    .rentPaid(false)
                     .paymentDate(now)
                     .paymentMonth(currentMonth)
                     .paymentYear(now.getYear())
                     .paymentMode(dto.getPaymentMode() != null ? dto.getPaymentMode() : "CASH")
-                    .status(paymentStatus)
+                    .paymentType("ADVANCE")
+                    .status("PENDING")
                     .remarks("Advance payment at registration")
                     .isApproved(false)
                     .receiptNo(amount > 0 ? "REC-PG-" + String.valueOf(System.currentTimeMillis()).substring(7) : null)
                     .build();
 
-            paymentRepository.save(payment);
+            paymentRepository.save(advancePayment);
         }
 
         return tenant.toTenantDto();
@@ -251,5 +277,14 @@ public class TenantServiceImpl implements TenantService {
                 && !dto.getGuardianMobile().matches("\\d{10}")) {
             throw new RuntimeException("Guardian mobile invalid");
         }
+    }
+
+    @Override
+    public java.util.Map<String, Long> getCounts() {
+        java.util.Map<String, Long> counts = new java.util.HashMap<>();
+        counts.put("awaiting", tenantRepository.countByStatus(Types.Status.NOT_APPROVED));
+        counts.put("active", tenantRepository.countByStatus(Types.Status.ACTIVE));
+        counts.put("notifications", tenantRepository.countTenantsWithPendingRent());
+        return counts;
     }
 }

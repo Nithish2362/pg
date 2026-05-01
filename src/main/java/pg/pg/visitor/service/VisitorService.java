@@ -1,6 +1,8 @@
 package pg.pg.visitor.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pg.pg.visitor.dto.VisitorDto;
@@ -33,6 +35,11 @@ public class VisitorService {
     public List<VisitorDto> getAll() {
         return visitorRepository.findAllByOrderByRequestDateDesc()
                 .stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    public Page<VisitorDto> getAllPaginatedVisitors(String status, String searchTerm, Pageable pageable) {
+        return visitorRepository.findByStatusAndSearch(status, searchTerm, pageable)
+                .map(this::toDto);
     }
 
     public List<VisitorDto> getByPgNumber(String pgNumber) {

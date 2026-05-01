@@ -1,6 +1,8 @@
 package pg.pg.notice.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pg.pg.notice.dto.NoticeDto;
@@ -33,8 +35,13 @@ public class NoticeService {
                 .stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    public Page<NoticeDto> getAllPaginatedNotices(Boolean active, String searchTerm, Pageable pageable) {
+        return noticeRepository.findByActiveAndSearch(active, searchTerm, pageable)
+                .map(this::toDto);
+    }
+
     public List<NoticeDto> getActiveNotices() {
-        return noticeRepository.findByActiveTrueOrderByCreatedAtDesc()
+        return noticeRepository.findByActiveOrderByCreatedAtDesc(true)
                 .stream().map(this::toDto).collect(Collectors.toList());
     }
 

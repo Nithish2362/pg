@@ -1,6 +1,9 @@
 package pg.pg.building.service.implementation;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -124,5 +127,12 @@ public class BuildingServiceImpl implements BuildingService {
                         new InvalidDataException("Building not found with ID : " + buildingId));
 
         buildingRepository.delete(building);
+    }
+
+    @Override
+    public Page<BuildingDto> getAllPaginatedBuildings(String searchTerm, Types.Status status, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page, pageSize);
+        return buildingRepository.findByStatusAndSearch(status, searchTerm, pageable)
+                .map(Building::toBuildingDto);
     }
 }

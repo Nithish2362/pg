@@ -1,6 +1,8 @@
 package pg.pg.complaint.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pg.pg.complaint.dto.ComplaintDto;
@@ -32,6 +34,11 @@ public class ComplaintService {
     public List<ComplaintDto> getAll() {
         return complaintRepository.findAllByOrderByCreatedAtDesc()
                 .stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    public Page<ComplaintDto> getAllPaginatedComplaints(String status, String searchTerm, Pageable pageable) {
+        return complaintRepository.findByStatusAndSearch(status, searchTerm, pageable)
+                .map(this::toDto);
     }
 
     public List<ComplaintDto> getByPgNumber(String pgNumber) {

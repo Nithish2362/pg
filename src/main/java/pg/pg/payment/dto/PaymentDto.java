@@ -31,4 +31,9 @@ public class PaymentDto {
     private String remarks;
     private String receiptNo;
     private Boolean isApproved;
+    private Double advancePaymentAmount;
+    private Boolean advancePaymentDone;
+    private Double rentAmount;
+    private Boolean rentPaid;
+    private String paymentType;
 }

@@ -43,11 +43,18 @@ public class TenantController {
             @RequestParam(required = false) String searchTerm,
             @RequestParam(defaultValue = "ACTIVE") Types.Status status) {
 
+        org.springframework.data.domain.Page<TenantDto> result = tenantService.getAllPaginatedTenants(
+                searchTerm, status, page, pageSize);
         return new SuccessResponse(
                 "Tenants Fetched Successfully",
-                tenantService.getAllPaginatedTenants(
-                        searchTerm, status, page, pageSize)
+                result.getContent(),
+                result.getTotalElements()
         );
+    }
+
+    @GetMapping("/counts")
+    public SuccessResponse getCounts() {
+        return new SuccessResponse("Counts fetched", tenantService.getCounts());
     }
 
     @GetMapping("/{tenantId}")

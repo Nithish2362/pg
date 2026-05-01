@@ -1,6 +1,9 @@
 package pg.pg.floor.service.implementation;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -105,5 +108,12 @@ public class FloorServiceImpl implements FloorService {
         Floor floor = floorRepository.findByFloorId(id)
                 .orElseThrow(() -> new InvalidDataException("Floor not found with ID: " + id));
         floorRepository.delete(floor);
+    }
+
+    @Override
+    public Page<FloorDto> getAllPaginatedFloors(String searchTerm, Types.Status status, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page, pageSize);
+        return floorRepository.findByStatusAndSearch(status, searchTerm, pageable)
+                .map(Floor::toFloorDto);
     }
 }

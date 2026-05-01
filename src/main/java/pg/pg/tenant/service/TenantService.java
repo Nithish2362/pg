@@ -8,6 +8,7 @@ import pg.pg.tenant.dto.TenantDto;
 import pg.pg.utils.Types;
 
 import java.util.List;
+import java.util.Map;
 
 public interface TenantService {
 
@@ -27,4 +28,6 @@ public interface TenantService {
     void changeStatus(String pgNumber, Types.Status status);
 
     void approveTenant(String pgNumber);
+
+    Map<String, Long> getCounts();
 }

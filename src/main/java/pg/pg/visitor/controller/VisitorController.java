@@ -1,10 +1,15 @@
 package pg.pg.visitor.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
 import pg.pg.visitor.dto.VisitorDto;
 import pg.pg.visitor.service.VisitorService;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +28,20 @@ public class VisitorController {
     @GetMapping
     public SuccessResponse getAll() {
         return new SuccessResponse("Visitors fetched", visitorService.getAll());
+    }
+
+    @GetMapping("/view")
+    public SuccessResponse getPaginatedVisitors(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String searchTerm
+    ) {
+        Page<VisitorDto> visitorPage = visitorService.getAllPaginatedVisitors(status, searchTerm, PageRequest.of(page, pageSize));
+        Map<String, Object> data = new HashMap<>();
+        data.put("response", visitorPage.getContent());
+        data.put("count", visitorPage.getTotalElements());
+        return new SuccessResponse("Paginated visitors fetched", data);
     }
 
     // Tenant views their visitors

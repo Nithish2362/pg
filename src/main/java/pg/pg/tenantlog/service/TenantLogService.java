@@ -1,6 +1,8 @@
 package pg.pg.tenantlog.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pg.pg.tenantlog.dto.TenantLogDto;
@@ -46,6 +48,11 @@ public class TenantLogService {
     public List<TenantLogDto> getAll() {
         return tenantLogRepository.findAllByOrderByOutTimeDesc()
                 .stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    public Page<TenantLogDto> getAllPaginatedLogs(String status, String searchTerm, Pageable pageable) {
+        return tenantLogRepository.findByStatusAndSearch(status, searchTerm, pageable)
+                .map(this::toDto);
     }
 
     private TenantLogDto toDto(TenantLog l) {

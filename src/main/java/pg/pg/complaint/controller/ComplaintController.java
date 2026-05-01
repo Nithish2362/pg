@@ -1,11 +1,14 @@
 package pg.pg.complaint.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
 import pg.pg.complaint.dto.ComplaintDto;
 import pg.pg.complaint.service.ComplaintService;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -25,6 +28,20 @@ public class ComplaintController {
     @GetMapping
     public SuccessResponse getAll() {
         return new SuccessResponse("Complaints fetched", complaintService.getAll());
+    }
+
+    @GetMapping("/view")
+    public SuccessResponse getPaginatedComplaints(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String searchTerm
+    ) {
+        Page<ComplaintDto> complaintPage = complaintService.getAllPaginatedComplaints(status, searchTerm, PageRequest.of(page, pageSize));
+        Map<String, Object> data = new HashMap<>();
+        data.put("response", complaintPage.getContent());
+        data.put("count", complaintPage.getTotalElements());
+        return new SuccessResponse("Paginated complaints fetched", data);
     }
 
     // Tenant: view own complaints

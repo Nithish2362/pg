@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import pg.pg.common.dto.SuccessResponse;
 import pg.pg.building.dto.BuildingDto;
 import pg.pg.building.service.BuildingService;
+import pg.pg.utils.Types;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -17,6 +18,22 @@ public class BuildingController {
     @GetMapping
     public SuccessResponse getAllBuildings() {
         return new SuccessResponse("Buildings fetched successfully", buildingService.getAllBuildings());
+    }
+
+    @GetMapping("/view")
+    public SuccessResponse getPaginated(
+            @RequestParam int page,
+            @RequestParam int pageSize,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(defaultValue = "ACTIVE") Types.Status status) {
+
+        org.springframework.data.domain.Page<BuildingDto> result = buildingService.getAllPaginatedBuildings(
+                searchTerm, status, page, pageSize);
+        return new SuccessResponse(
+                "Buildings Fetched Successfully",
+                result.getContent(),
+                result.getTotalElements()
+        );
     }
 
     @GetMapping("/location/{locationId}")

@@ -25,6 +25,36 @@ public class PaymentController {
         );
     }
 
+    @GetMapping("/view")
+    public SuccessResponse getPaginated(
+            @RequestParam int page,
+            @RequestParam int pageSize,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String status) {
+
+        org.springframework.data.domain.Page<PaymentDto> result = paymentService.getAllPaginatedPayments(
+                searchTerm, status, page, pageSize);
+        return new SuccessResponse(
+                "Payments Fetched Successfully",
+                result.getContent(),
+                result.getTotalElements()
+        );
+    }
+
+    @GetMapping("/counts")
+    public SuccessResponse getCounts() {
+        return new SuccessResponse("Counts fetched", paymentService.getCounts());
+    }
+
+    @PostMapping("/generate-rent")
+    public SuccessResponse generateMonthlyRent() {
+        paymentService.generateMonthlyRent();
+        return new SuccessResponse(
+                "Monthly rent generated successfully for all active tenants",
+                null
+        );
+    }
+
     @GetMapping("/tenant/{tenantId}")
     public SuccessResponse getPaymentsByTenant(@PathVariable String tenantId) {
         return new SuccessResponse(

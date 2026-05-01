@@ -39,8 +39,8 @@ public class BedController {
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false, defaultValue = "ACTIVE") Types.Status status) {
 
-        return new SuccessResponse("Beds Fetched Successfully",
-                bedService.getAllPaginatedBeds(searchTerm, status, page, pageSize));
+        org.springframework.data.domain.Page<BedDto> result = bedService.getAllPaginatedBeds(searchTerm, status, page, pageSize);
+        return new SuccessResponse("Beds Fetched Successfully", result.getContent(), result.getTotalElements());
     }
 
     @GetMapping("/{bedId}")

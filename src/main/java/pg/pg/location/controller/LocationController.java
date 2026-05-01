@@ -40,8 +40,8 @@ public class LocationController {
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false, defaultValue = "ACTIVE") Types.Status status) {
 
-        return new SuccessResponse("Locations Fetched Successfully",
-                locationService.getAllPaginatedLocations(searchTerm, status, page, pageSize));
+        org.springframework.data.domain.Page<LocationDto> result = locationService.getAllPaginatedLocations(searchTerm, status, page, pageSize);
+        return new SuccessResponse("Locations Fetched Successfully", result.getContent(), result.getTotalElements());
     }
 
     @PutMapping("/{locationId}")

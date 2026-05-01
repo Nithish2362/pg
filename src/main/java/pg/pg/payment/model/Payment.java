@@ -52,6 +52,21 @@ public class Payment {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean isApproved = false;
 
+    @Column(name = "advance_payment_amount")
+    private Double advancePaymentAmount;
+
+    @Column(name = "advance_payment_done", columnDefinition = "boolean default false")
+    private Boolean advancePaymentDone = false;
+
+    @Column(name = "rent_amount")
+    private Double rentAmount;
+
+    @Column(name = "rent_paid", columnDefinition = "boolean default false")
+    private Boolean rentPaid = false;
+
+    @Column(name = "payment_type")
+    private String paymentType;
+
     public PaymentDto toDto() {
         return PaymentDto.builder()
                 .id(id)
@@ -67,6 +82,11 @@ public class Payment {
                 .remarks(remarks)
                 .receiptNo(receiptNo)
                 .isApproved(isApproved)
+                .advancePaymentAmount(advancePaymentAmount)
+                .advancePaymentDone(advancePaymentDone)
+                .rentAmount(rentAmount)
+                .rentPaid(rentPaid)
+                .paymentType(paymentType)
                 .build();
     }
 }

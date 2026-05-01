@@ -38,4 +38,9 @@ public interface TenantRepository extends JpaRepository<Tenant, String> {
             @Param("searchTerm") String searchTerm,
             Pageable pageable
     );
+
+    long countByStatus(Types.Status status);
+
+    @Query("SELECT COUNT(DISTINCT t) FROM Tenant t JOIN pg.pg.payment.model.Payment p ON p.tenant = t WHERE t.status = pg.pg.utils.Types.Status.ACTIVE AND p.paymentType = 'RENT' AND p.status = 'PENDING'")
+    long countTenantsWithPendingRent();
 }

@@ -36,8 +36,8 @@ public class RoomController {
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false, defaultValue = "ACTIVE") Types.Status status) {
 
-        return new SuccessResponse("Rooms Fetched Successfully",
-                roomService.getAllPaginatedRooms(searchTerm, status, page, pageSize));
+        org.springframework.data.domain.Page<RoomDto> result = roomService.getAllPaginatedRooms(searchTerm, status, page, pageSize);
+        return new SuccessResponse("Rooms Fetched Successfully", result.getContent(), result.getTotalElements());
     }
 
     @GetMapping("/{roomId}")
