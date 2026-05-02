@@ -12,6 +12,7 @@ import pg.pg.payment.repository.PaymentRepository;
 import pg.pg.payment.service.PaymentService;
 import pg.pg.tenant.model.Tenant;
 import pg.pg.tenant.repository.TenantRepository;
+import pg.pg.utils.SecurityUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final TenantRepository tenantRepository;
+    private final SecurityUtils securityUtils;
 
     @Override
     public List<PaymentDto> getAllPayments() {
@@ -51,7 +53,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentDto createPayment(PaymentDto dto, String tenantId) {
-
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
@@ -65,7 +66,6 @@ public class PaymentServiceImpl implements PaymentService {
         if (amount >= monthlyRent && monthlyRent > 0) {
             status = "PAID";
         } else if (amount > 0 && monthlyRent == 0) {
-            // This case handles initial advance/deposit which might not have a monthlyRent context
             status = "PAID";
         }
 
@@ -96,7 +96,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentDto updatePayment(Long id, PaymentDto dto) {
-
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Payment not found"));
 
@@ -139,7 +138,6 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setReceiptNo(dto.getReceiptNo());
         if (dto.getIsApproved() != null) {
             payment.setIsApproved(dto.getIsApproved());
-            // Map legacy isApproved to new status just in case
             if (dto.getIsApproved() && "UNAPPROVED".equals(newStatus)) {
                 payment.setStatus("APPROVED");
             }
@@ -147,28 +145,20 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment saved = paymentRepository.save(payment);
 
-        // Auto-activate tenant if advance is approved
         if ("APPROVED".equals(saved.getStatus()) && "ADVANCE".equals(saved.getPaymentType())) {
             if (saved.getTenant() != null && pg.pg.utils.Types.Status.NOT_APPROVED.equals(saved.getTenant().getStatus())) {
                 Tenant t = saved.getTenant();
                 t.setStatus(pg.pg.utils.Types.Status.ACTIVE);
-                
-                if (t.getBed() != null) {
-                    t.getBed().setIsOccupied(true);
-                }
+                if (t.getBed() != null) t.getBed().setIsOccupied(true);
                 tenantRepository.save(t);
 
-                // Create initial RENT payment record for the active tenant
                 java.time.LocalDate now = java.time.LocalDate.now();
-
-                // Use custom rent period if set, otherwise fall back to current month
                 java.time.LocalDate rentStartDate = t.getRentStartDate() != null ? t.getRentStartDate().toLocalDate() : now.withDayOfMonth(1);
                 java.time.LocalDate rentEndDate = t.getRentEndDate() != null ? t.getRentEndDate().toLocalDate() : now.withDayOfMonth(now.lengthOfMonth());
 
                 String monthName = rentStartDate.getMonth().name().charAt(0) + rentStartDate.getMonth().name().substring(1).toLowerCase();
                 int year = rentStartDate.getYear();
 
-                // Check if rent already exists for this tenant for this month/year
                 boolean exists = paymentRepository.findByTenant(t).stream()
                         .anyMatch(p -> "RENT".equals(p.getPaymentType()) && monthName.equals(p.getPaymentMonth()) && year == p.getPaymentYear());
 
@@ -193,7 +183,6 @@ public class PaymentServiceImpl implements PaymentService {
                 }
             }
         }
-
         return saved.toDto();
     }
 
@@ -209,13 +198,11 @@ public class PaymentServiceImpl implements PaymentService {
         int year = now.getYear();
         String rangeRemarks = String.format("Rent for %s 1 to %s %d", monthName, monthName, now.lengthOfMonth());
 
-        // Get all active tenants
         List<Tenant> activeTenants = tenantRepository.findAll().stream()
                 .filter(t -> pg.pg.utils.Types.Status.ACTIVE.equals(t.getStatus()))
                 .collect(java.util.stream.Collectors.toList());
 
         for (Tenant t : activeTenants) {
-            // Skip if rent already exists for this tenant for this month/year (pending or unapproved)
             boolean exists = paymentRepository.findByTenant(t).stream()
                     .anyMatch(p -> "RENT".equals(p.getPaymentType())
                             && monthName.equals(p.getPaymentMonth())
@@ -242,26 +229,32 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public Page<PaymentDto> getAllPaginatedPayments(String searchTerm, String status, int page, int pageSize) {
+    public Page<PaymentDto> getAllPaginatedPayments(String searchTerm, String status, int page, int pageSize, String locationId, String buildingId) {
+        String staffBuildingId = securityUtils.getCurrentStaffBuildingId();
+        String effectiveBuildingId = staffBuildingId != null ? staffBuildingId : buildingId;
+
         Pageable pageable = PageRequest.of(page, pageSize);
-        return paymentRepository.findByStatusAndSearch(status, searchTerm, pageable)
+        return paymentRepository.findByFilters(status, searchTerm, locationId, effectiveBuildingId, pageable)
                 .map(Payment::toDto);
     }
 
     @Override
-    public Map<String, Long> getCounts() {
+    public Map<String, Long> getCounts(String locationId, String buildingId) {
+        String staffBuildingId = securityUtils.getCurrentStaffBuildingId();
+        String effectiveBuildingId = staffBuildingId != null ? staffBuildingId : buildingId;
+
         Map<String, Long> counts = new HashMap<>();
-        counts.put("PENDING", paymentRepository.countByStatus("PENDING"));
-        counts.put("UNAPPROVED", paymentRepository.countByStatus("UNAPPROVED"));
-        counts.put("APPROVED", paymentRepository.countByStatus("APPROVED"));
+        counts.put("PENDING", paymentRepository.countByFilters("PENDING", locationId, effectiveBuildingId));
+        counts.put("UNAPPROVED", paymentRepository.countByFilters("UNAPPROVED", locationId, effectiveBuildingId));
+        counts.put("APPROVED", paymentRepository.countByFilters("APPROVED", locationId, effectiveBuildingId));
         
-        counts.put("ADVANCE_PENDING", paymentRepository.countByStatusAndPaymentType("PENDING", "ADVANCE"));
-        counts.put("ADVANCE_UNAPPROVED", paymentRepository.countByStatusAndPaymentType("UNAPPROVED", "ADVANCE"));
-        counts.put("ADVANCE_APPROVED", paymentRepository.countByStatusAndPaymentType("APPROVED", "ADVANCE"));
+        counts.put("ADVANCE_PENDING", paymentRepository.countByFiltersAndType("PENDING", "ADVANCE", locationId, effectiveBuildingId));
+        counts.put("ADVANCE_UNAPPROVED", paymentRepository.countByFiltersAndType("UNAPPROVED", "ADVANCE", locationId, effectiveBuildingId));
+        counts.put("ADVANCE_APPROVED", paymentRepository.countByFiltersAndType("APPROVED", "ADVANCE", locationId, effectiveBuildingId));
         
-        counts.put("RENT_PENDING", paymentRepository.countByStatusAndPaymentType("PENDING", "RENT"));
-        counts.put("RENT_UNAPPROVED", paymentRepository.countByStatusAndPaymentType("UNAPPROVED", "RENT"));
-        counts.put("RENT_APPROVED", paymentRepository.countByStatusAndPaymentType("APPROVED", "RENT"));
+        counts.put("RENT_PENDING", paymentRepository.countByFiltersAndType("PENDING", "RENT", locationId, effectiveBuildingId));
+        counts.put("RENT_UNAPPROVED", paymentRepository.countByFiltersAndType("UNAPPROVED", "RENT", locationId, effectiveBuildingId));
+        counts.put("RENT_APPROVED", paymentRepository.countByFiltersAndType("APPROVED", "RENT", locationId, effectiveBuildingId));
         
         return counts;
     }

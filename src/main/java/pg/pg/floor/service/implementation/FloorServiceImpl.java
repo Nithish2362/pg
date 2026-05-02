@@ -111,9 +111,9 @@ public class FloorServiceImpl implements FloorService {
     }
 
     @Override
-    public Page<FloorDto> getAllPaginatedFloors(String searchTerm, Types.Status status, int page, int pageSize) {
+    public Page<FloorDto> getAllPaginatedFloors(String searchTerm, Types.Status status, int page, int pageSize, String locationId, String buildingId) {
         Pageable pageable = PageRequest.of(page, pageSize);
-        return floorRepository.findByStatusAndSearch(status, searchTerm, pageable)
+        return floorRepository.findByFilters(status, searchTerm, locationId, buildingId, pageable)
                 .map(Floor::toFloorDto);
     }
 }

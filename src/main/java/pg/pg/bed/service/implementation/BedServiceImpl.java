@@ -56,9 +56,9 @@ public class BedServiceImpl implements BedService {
     }
 
     @Override
-    public Page<BedDto> getAllPaginatedBeds(String searchTerm, Types.Status status, int page, int pageSize) {
+    public Page<BedDto> getAllPaginatedBeds(String searchTerm, Types.Status status, int page, int pageSize, String locationId, String buildingId, String floorId, String roomId) {
         Pageable pageable = PageRequest.of(page, pageSize);
-        return bedRepository.findByStatusAndSearch(status, searchTerm, pageable)
+        return bedRepository.findByFilters(status, searchTerm, locationId, buildingId, floorId, roomId, pageable)
                 .map(Bed::toBedDto);
     }
 

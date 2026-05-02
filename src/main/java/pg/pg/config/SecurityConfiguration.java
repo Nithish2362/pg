@@ -60,9 +60,22 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/tenant/**").hasRole("TENANT")
-                        // Shared endpoints - accessible by both ADMIN and TENANT
+                        
+                        // STAFF can view (GET) all admin data and manage Tenants/Payments/Expenses
+                        .requestMatchers(HttpMethod.GET, "/api/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "STAFF")
+                        .requestMatchers("/api/admin/tenants/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "STAFF")
+                        .requestMatchers("/api/admin/payments/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "STAFF")
+                        .requestMatchers("/api/admin/expenses/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "STAFF")
+                        
+                        // Strict ADMIN only modules
+                        .requestMatchers("/api/admin/staff/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                        
+                        // Generic admin access for everything else
+                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                        
+                        .requestMatchers("/api/tenant/**").hasAnyRole("TENANT")
+                        
+                        // Shared endpoints
                         .requestMatchers("/api/complaints/**").authenticated()
                         .requestMatchers("/api/notices/**").authenticated()
                         .requestMatchers("/api/tenant-logs/**").authenticated()
@@ -78,9 +91,9 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));     // For development (change to specific origin in prod)
-        configuration.setAllowedMethods(Arrays.asList("*"));            // Allow all methods
-        configuration.setAllowedHeaders(Arrays.asList("*"));            // Allow all headers
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("*"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -30,10 +30,12 @@ public class PaymentController {
             @RequestParam int page,
             @RequestParam int pageSize,
             @RequestParam(required = false) String searchTerm,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String locationId,
+            @RequestParam(required = false) String buildingId) {
 
         org.springframework.data.domain.Page<PaymentDto> result = paymentService.getAllPaginatedPayments(
-                searchTerm, status, page, pageSize);
+                searchTerm, status, page, pageSize, locationId, buildingId);
         return new SuccessResponse(
                 "Payments Fetched Successfully",
                 result.getContent(),
@@ -42,8 +44,10 @@ public class PaymentController {
     }
 
     @GetMapping("/counts")
-    public SuccessResponse getCounts() {
-        return new SuccessResponse("Counts fetched", paymentService.getCounts());
+    public SuccessResponse getCounts(
+            @RequestParam(required = false) String locationId,
+            @RequestParam(required = false) String buildingId) {
+        return new SuccessResponse("Counts fetched", paymentService.getCounts(locationId, buildingId));
     }
 
     @PostMapping("/generate-rent")

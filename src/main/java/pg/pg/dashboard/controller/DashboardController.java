@@ -15,7 +15,9 @@ public class DashboardController {
     private final DashboardService dashboardService;
 
     @GetMapping
-    public SuccessResponse getDashboardStats() {
-        return new SuccessResponse("Dashboard stats fetched successfully", dashboardService.getStats());
+    public SuccessResponse getDashboardStats(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String locationId,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String buildingId) {
+        return new SuccessResponse("Dashboard stats fetched successfully", dashboardService.getStats(locationId, buildingId));
     }
 }

@@ -41,6 +41,9 @@ public class TenantDto extends BaseDto {
 
     private java.time.LocalDateTime rentStartDate;
     private java.time.LocalDateTime rentEndDate;
+    private LocalDate checkInDate;
+    private LocalDate checkOutDate;
+    private Boolean isCheckedOut;
 
     private String bedId;
     private String userId;
@@ -91,6 +94,9 @@ public class TenantDto extends BaseDto {
                 .joinDate(joinDate)
                 .rentStartDate(rentStartDate)
                 .rentEndDate(rentEndDate)
+                .checkInDate(checkInDate)
+                .checkOutDate(checkOutDate)
+                .isCheckedOut(isCheckedOut != null ? isCheckedOut : false)
                 .status(getStatus())
                 .build();
     }

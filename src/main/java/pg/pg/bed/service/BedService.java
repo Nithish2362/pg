@@ -12,7 +12,7 @@ public interface BedService {
 
     List<BedDto> getAllBeds();
 
-    Page<BedDto> getAllPaginatedBeds(String searchTerm, Types.Status status, int page, int pageSize);
+    Page<BedDto> getAllPaginatedBeds(String searchTerm, Types.Status status, int page, int pageSize, String locationId, String buildingId, String floorId, String roomId);
 
     BedDto getBedById(String bedId);
 

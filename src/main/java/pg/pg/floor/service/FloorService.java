@@ -13,5 +13,5 @@ public interface FloorService {
     FloorDto updateFloor(String id, FloorDto floorDetails);
     void deleteFloor(String id);
 
-    org.springframework.data.domain.Page<FloorDto> getAllPaginatedFloors(String searchTerm, pg.pg.utils.Types.Status status, int page, int pageSize);
+    org.springframework.data.domain.Page<FloorDto> getAllPaginatedFloors(String searchTerm, pg.pg.utils.Types.Status status, int page, int pageSize, String locationId, String buildingId);
 }

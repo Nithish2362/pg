@@ -20,7 +20,9 @@ public interface TenantService {
             String searchTerm,
             Types.Status status,
             int page,
-            int pageSize
+            int pageSize,
+            String locationId,
+            String buildingId
     );
     TenantDto getTenantByUserId(Long userId);
     TenantDto getTenantById(String pgNumber);
@@ -28,6 +30,6 @@ public interface TenantService {
     void changeStatus(String pgNumber, Types.Status status);
 
     void approveTenant(String pgNumber);
-
+    void checkoutTenant(String pgNumber);
     Map<String, Long> getCounts();
 }

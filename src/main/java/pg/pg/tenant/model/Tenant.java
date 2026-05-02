@@ -57,6 +57,12 @@ public class Tenant extends BaseModel {
     private java.time.LocalDateTime rentStartDate;
     private java.time.LocalDateTime rentEndDate;
 
+    private LocalDate checkInDate;
+    private LocalDate checkOutDate;
+
+    @Builder.Default
+    private Boolean isCheckedOut = false;
+
     // ===============================
     // Bed Relation
     // ===============================
@@ -209,6 +215,9 @@ public class Tenant extends BaseModel {
                                 : null
                 )
 
+                .checkInDate(checkInDate != null ? checkInDate : joinDate)
+                .checkOutDate(checkOutDate)
+                .isCheckedOut(isCheckedOut != null ? isCheckedOut : false)
                 .status(getStatus())
                 .build();
     }

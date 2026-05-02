@@ -13,4 +13,6 @@ public class NoticeDto {
     private String content;
     private LocalDateTime createdAt;
     private Boolean active;
+    private String buildingId;
+    private String locationId;
 }

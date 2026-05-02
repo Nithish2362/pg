@@ -15,23 +15,26 @@ import java.util.Optional;
 @Repository
 public interface FloorRepository extends JpaRepository<Floor, String> {
 
-    // Find by business ID (floorId like FLR-00001)
     Optional<Floor> findByFloorId(String floorId);
 
-    // Find all floors under a building by business ID
-    // Assumes Building entity has a 'buildingId' field (like Room/Floor)
     List<Floor> findByBuildingBuildingId(String buildingId);
 
     @Query("""
         SELECT f FROM Floor f
+        LEFT JOIN f.building bl
+        LEFT JOIN bl.location loc
         WHERE f.status = :status
+        AND (:locationId IS NULL OR loc.locationId = :locationId)
+        AND (:buildingId IS NULL OR bl.buildingId = :buildingId)
         AND (:searchTerm IS NULL OR :searchTerm = '' 
              OR LOWER(f.floorName) LIKE LOWER(CONCAT(:searchTerm, '%'))
              OR LOWER(f.floorId) LIKE LOWER(CONCAT(:searchTerm, '%')))
     """)
-    Page<Floor> findByStatusAndSearch(
+    Page<Floor> findByFilters(
             @Param("status") Types.Status status,
             @Param("searchTerm") String searchTerm,
+            @Param("locationId") String locationId,
+            @Param("buildingId") String buildingId,
             Pageable pageable
     );
 }

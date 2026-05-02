@@ -4,7 +4,7 @@ public class Types {
 
     public enum PrefixType {
 
-        ARTICLESKU,VARIANTSKU,LOCATION,BUILDING ,FLOOR,ROOM,BED}
+        ARTICLESKU,VARIANTSKU,LOCATION,BUILDING ,FLOOR,ROOM,BED, STAFF}
 
     public enum Status {
         ACTIVE, INACTIVE, NOT_APPROVED

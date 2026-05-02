@@ -2,7 +2,6 @@ package pg.pg.notice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -28,4 +27,7 @@ public class Notice {
 
     @Column(nullable = false)
     private Boolean active;
+
+    private String buildingId; // If null, notice is global
+    private String locationId;
 }

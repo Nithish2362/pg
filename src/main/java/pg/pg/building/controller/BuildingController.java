@@ -25,10 +25,11 @@ public class BuildingController {
             @RequestParam int page,
             @RequestParam int pageSize,
             @RequestParam(required = false) String searchTerm,
-            @RequestParam(defaultValue = "ACTIVE") Types.Status status) {
+            @RequestParam(defaultValue = "ACTIVE") Types.Status status,
+            @RequestParam(required = false) String locationId) {
 
         org.springframework.data.domain.Page<BuildingDto> result = buildingService.getAllPaginatedBuildings(
-                searchTerm, status, page, pageSize);
+                searchTerm, status, page, pageSize, locationId);
         return new SuccessResponse(
                 "Buildings Fetched Successfully",
                 result.getContent(),

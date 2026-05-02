@@ -19,5 +19,5 @@ public interface BuildingService {
 
     void deleteBuilding(String buildingId);
 
-    Page<BuildingDto> getAllPaginatedBuildings(String searchTerm, Types.Status status, int page, int pageSize);
+    Page<BuildingDto> getAllPaginatedBuildings(String searchTerm, Types.Status status, int page, int pageSize, String locationId);
 }

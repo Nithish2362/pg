@@ -25,10 +25,12 @@ public class FloorController {
             @RequestParam int page,
             @RequestParam int pageSize,
             @RequestParam(required = false) String searchTerm,
-            @RequestParam(defaultValue = "ACTIVE") Types.Status status) {
+            @RequestParam(defaultValue = "ACTIVE") Types.Status status,
+            @RequestParam(required = false) String locationId,
+            @RequestParam(required = false) String buildingId) {
 
         org.springframework.data.domain.Page<FloorDto> result = floorService.getAllPaginatedFloors(
-                searchTerm, status, page, pageSize);
+                searchTerm, status, page, pageSize, locationId, buildingId);
         return new SuccessResponse(
                 "Floors Fetched Successfully",
                 result.getContent(),

@@ -16,7 +16,10 @@ public interface RoomService {
             String searchTerm,
             Types.Status status,
             int page,
-            int pageSize
+            int pageSize,
+            String locationId,
+            String buildingId,
+            String floorId
     );
 
     RoomDto getRoomById(String roomId);

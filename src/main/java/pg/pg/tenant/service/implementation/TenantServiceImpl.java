@@ -18,6 +18,7 @@ import pg.pg.tenant.repository.TenantRepository;
 import pg.pg.tenant.service.TenantService;
 import pg.pg.user.model.User;
 import pg.pg.user.repository.UserRepository;
+import pg.pg.utils.SecurityUtils;
 import pg.pg.utils.Types;
 
 import pg.pg.payment.model.Payment;
@@ -39,16 +40,17 @@ public class TenantServiceImpl implements TenantService {
     private final PrefixService prefixService;
     private final PaymentRepository paymentRepository;
     private final pg.pg.utils.EmailService emailService;
+    private final SecurityUtils securityUtils;
 
     @Override
     public TenantDto createTenant(TenantDto dto, String bedId) {
 
         validateTenant(dto);
 
+        String staffBuildingId = securityUtils.getCurrentStaffBuildingId();
+
         boolean isUpdate = StringUtils.hasText(dto.getPgNumber());
 
-        // Allow creation even with 0 payment, as per user requirement to show them in 'Unpaid' tab.
-        // But user requested to only allow if advance payment > 0.
          if (!isUpdate) {
              if (dto.getPaymentAmount() == null || dto.getPaymentAmount() <= 0) {
                  throw new RuntimeException("Advance payment is mandatory to register a tenant.");
@@ -59,37 +61,30 @@ public class TenantServiceImpl implements TenantService {
         Bed oldBed = null;
 
         if (!isUpdate) {
-
-            tenant.setPgNumber(
-                    prefixService.createPrefixIfNotPresentAndCreateSequence(
-                            Types.PrefixType.BED,
-                            "PG"
-                    )
-            );
-
+            tenant.setPgNumber(prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BED, "PG"));
             tenant.setJoinDate(LocalDate.now());
-            // Tenant is Awaiting Activation (NOT_APPROVED) until advance is approved
             tenant.setStatus(Types.Status.NOT_APPROVED);
-            // Save custom rent period if provided
             tenant.setRentStartDate(dto.getRentStartDate());
             tenant.setRentEndDate(dto.getRentEndDate());
-
         } else {
-
             Tenant old = tenantRepository.findByPgNumber(dto.getPgNumber())
-                    .orElseThrow(() -> new RuntimeException("Tenant not found with PG Number: " + dto.getPgNumber()));
+                    .orElseThrow(() -> new RuntimeException("Tenant not found"));
+
+            // Safety check for staff updating tenants outside their building
+            if (staffBuildingId != null && old.getBed() != null && 
+                !staffBuildingId.equals(old.getBed().getRoom().getFloor().getBuilding().getBuildingId())) {
+                throw new RuntimeException("Access denied: Tenant belongs to another building.");
+            }
 
             tenant.setId(old.getId());
             tenant.setJoinDate(old.getJoinDate());
             tenant.setStatus(old.getStatus());
-            // Preserve or update rent period
             tenant.setRentStartDate(dto.getRentStartDate() != null ? dto.getRentStartDate() : old.getRentStartDate());
             tenant.setRentEndDate(dto.getRentEndDate() != null ? dto.getRentEndDate() : old.getRentEndDate());
             oldBed = old.getBed();
             
             User user = old.getUser();
             if (user != null) {
-                // Update user details if they changed
                 user.setEmail(tenant.getEmail());
                 user.setMobileNumber(tenant.getMobileNumber());
                 user.setFullName(tenant.getStudentName());
@@ -98,7 +93,6 @@ public class TenantServiceImpl implements TenantService {
             }
         }
 
-        // Try lookup by business ID first, then by primary key (String ID)
         Bed newBed = bedRepository.findByBedId(bedId)
                 .orElseGet(() -> bedRepository.findById(bedId).orElse(null));
 
@@ -106,21 +100,20 @@ public class TenantServiceImpl implements TenantService {
              throw new RuntimeException("Bed not found with ID: " + bedId);
         }
 
-        // If bed is changed or it's a new tenant
+        // STAFF ACCESS CONTROL: Ensure new bed belongs to their building
+        if (staffBuildingId != null && (newBed.getRoom() == null || 
+            !staffBuildingId.equals(newBed.getRoom().getFloor().getBuilding().getBuildingId()))) {
+            throw new RuntimeException("Access denied: You can only assign beds within your assigned building.");
+        }
+
         if (oldBed == null || !oldBed.getBedId().equals(newBed.getBedId())) {
-            
-            // Check if new bed is occupied
             if (Boolean.TRUE.equals(newBed.getIsOccupied())) {
                 throw new RuntimeException("Target bed is already occupied");
             }
-
-            // Release old bed if it exists
             if (oldBed != null) {
                 oldBed.setIsOccupied(false);
                 bedRepository.save(oldBed);
             }
-            
-            // Occupy new bed
             newBed.setIsOccupied(true);
             bedRepository.save(newBed);
         }
@@ -128,9 +121,7 @@ public class TenantServiceImpl implements TenantService {
         tenant.setBed(newBed);
 
         if (tenant.getUser() == null) {
-
             String rawPassword = String.valueOf((int)(Math.random() * 900000 + 100000));
-            
             User user = new User();
             user.setUsername(tenant.getPgNumber());
             user.setPassword(passwordEncoder.encode(rawPassword));
@@ -140,19 +131,14 @@ public class TenantServiceImpl implements TenantService {
             user.setPgNumber(tenant.getPgNumber());
             user.setFullName(tenant.getStudentName());
             user.setIsFirstLogin(true);
-
             tenant.setUser(userRepository.save(user));
-
-            // Send email with credentials
             emailService.sendCredentials(tenant.getEmail(), tenant.getPgNumber(), rawPassword);
         }
 
         tenant = tenantRepository.save(tenant);
 
-        // If bed changed, update any PENDING rent payment for this tenant to new room's rent
         if (newBed != null && (oldBed == null || !newBed.getBedId().equals(oldBed.getBedId()))) {
             Double newRent = newBed.getRoom() != null ? newBed.getRoom().getMonthlyRent() : 0.0;
-            // Find PENDING RENT payments for this tenant
             paymentRepository.findByTenant(tenant).stream()
                 .filter(p -> "RENT".equals(p.getPaymentType()) && "PENDING".equals(p.getStatus()))
                 .forEach(p -> {
@@ -162,21 +148,12 @@ public class TenantServiceImpl implements TenantService {
                 });
         }
 
-        // If it's a new tenant creation (pgNumber was initially empty), record the payment
         if (!StringUtils.hasText(dto.getPgNumber())) {
             Double amount = dto.getPaymentAmount();
-            Double monthlyRent = newBed.getRoom() != null ? newBed.getRoom().getMonthlyRent() : 0.0;
-            
-            String paymentStatus = "PENDING";
-            if (amount > 0) {
-                paymentStatus = "PAID";
-            }
-            
             LocalDate now = LocalDate.now();
             String currentMonth = now.getMonth().name().substring(0, 1).toUpperCase() + 
                                   now.getMonth().name().substring(1).toLowerCase();
 
-            // 1. Create Advance Payment Record
             Payment advancePayment = Payment.builder()
                     .tenant(tenant)
                     .amount(amount) 
@@ -203,29 +180,39 @@ public class TenantServiceImpl implements TenantService {
 
     @Override
     public List<TenantDto> getAllTenants() {
+        String staffBuildingId = securityUtils.getCurrentStaffBuildingId();
         return tenantRepository.findAll()
                 .stream()
+                .filter(t -> staffBuildingId == null || 
+                        (t.getBed() != null && t.getBed().getRoom() != null && 
+                         staffBuildingId.equals(t.getBed().getRoom().getFloor().getBuilding().getBuildingId())))
                 .map(Tenant::toTenantDto)
                 .collect(Collectors.toList());
     }
+
     @Override
     public TenantDto getTenantByUserId(Long userId) {
-
         return tenantRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"))
                 .toTenantDto();
     }
+
     @Override
     public Page<TenantDto> getAllPaginatedTenants(
             String searchTerm,
             Types.Status status,
             int page,
-            int pageSize) {
+            int pageSize,
+            String locationId,
+            String buildingId) {
+
+        String staffBuildingId = securityUtils.getCurrentStaffBuildingId();
+        String effectiveBuildingId = staffBuildingId != null ? staffBuildingId : buildingId;
 
         Pageable pageable = PageRequest.of(page, pageSize);
 
         return tenantRepository
-                .findByStatusAndSearch(status, searchTerm, pageable)
+                .findByStatusAndSearchAndFilters(status, searchTerm, locationId, effectiveBuildingId, pageable)
                 .map(Tenant::toTenantDto);
     }
 
@@ -238,53 +225,54 @@ public class TenantServiceImpl implements TenantService {
 
     @Override
     public void changeStatus(String pgNumber, Types.Status status) {
-
         Tenant tenant = tenantRepository.findByPgNumber(pgNumber)
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
-
         tenant.setStatus(status);
-
         if (tenant.getBed() != null) {
             tenant.getBed().setIsOccupied(status == Types.Status.ACTIVE);
         }
-
         tenantRepository.save(tenant);
     }
 
     @Override
     public void approveTenant(String pgNumber) {
-        // Obsolete: Approval is now part of the payment-first creation flow.
-        throw new UnsupportedOperationException("approveTenant is no longer supported.");
+        Tenant tenant = tenantRepository.findByPgNumber(pgNumber)
+                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+        tenant.setStatus(Types.Status.ACTIVE);
+        tenantRepository.save(tenant);
+    }
+
+    @Override
+    public void checkoutTenant(String pgNumber) {
+        Tenant tenant = tenantRepository.findByPgNumber(pgNumber)
+                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+        if (Boolean.TRUE.equals(tenant.getIsCheckedOut())) {
+            throw new RuntimeException("Tenant is already checked out");
+        }
+        tenant.setIsCheckedOut(true);
+        tenant.setCheckOutDate(LocalDate.now());
+        tenant.setStatus(Types.Status.INACTIVE);
+        Bed bed = tenant.getBed();
+        if (bed != null) {
+            bed.setIsOccupied(false);
+            bedRepository.save(bed);
+        }
+        tenantRepository.save(tenant);
     }
 
     private void validateTenant(TenantDto dto) {
-
         if (!dto.getMobileNumber().matches("\\d{10}")) {
             throw new RuntimeException("Student mobile must be 10 digits");
-        }
-
-        if (StringUtils.hasText(dto.getFatherMobile())
-                && !dto.getFatherMobile().matches("\\d{10}")) {
-            throw new RuntimeException("Father mobile invalid");
-        }
-
-        if (StringUtils.hasText(dto.getMotherMobile())
-                && !dto.getMotherMobile().matches("\\d{10}")) {
-            throw new RuntimeException("Mother mobile invalid");
-        }
-
-        if (StringUtils.hasText(dto.getGuardianMobile())
-                && !dto.getGuardianMobile().matches("\\d{10}")) {
-            throw new RuntimeException("Guardian mobile invalid");
         }
     }
 
     @Override
     public java.util.Map<String, Long> getCounts() {
+        String staffBuildingId = securityUtils.getCurrentStaffBuildingId();
         java.util.Map<String, Long> counts = new java.util.HashMap<>();
-        counts.put("awaiting", tenantRepository.countByStatus(Types.Status.NOT_APPROVED));
-        counts.put("active", tenantRepository.countByStatus(Types.Status.ACTIVE));
-        counts.put("notifications", tenantRepository.countTenantsWithPendingRent());
+        counts.put("awaiting", tenantRepository.countByStatusAndBuilding(Types.Status.NOT_APPROVED, staffBuildingId));
+        counts.put("active", tenantRepository.countByStatusAndBuilding(Types.Status.ACTIVE, staffBuildingId));
+        counts.put("notifications", tenantRepository.countTenantsWithPendingRentAndBuilding(staffBuildingId));
         return counts;
     }
 }

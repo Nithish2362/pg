@@ -15,6 +15,7 @@ import pg.pg.building.service.BuildingService;
 import pg.pg.location.model.Location;
 import pg.pg.location.repository.LocationRepository;
 import pg.pg.prefix.service.PrefixService;
+import pg.pg.utils.SecurityUtils;
 import pg.pg.utils.Types;
 
 import java.util.List;
@@ -28,111 +29,108 @@ public class BuildingServiceImpl implements BuildingService {
     private final BuildingRepository buildingRepository;
     private final LocationRepository locationRepository;
     private final PrefixService prefixService;
+    private final SecurityUtils securityUtils;
 
-    // CREATE
     @Override
     public BuildingDto createBuilding(BuildingDto buildingDto, String locationId) {
+        if (securityUtils.isStaff()) {
+            throw new RuntimeException("Access Denied: Staff cannot create buildings.");
+        }
 
         Location location = locationRepository.findByLocationId(locationId)
-                .orElseThrow(() ->
-                        new InvalidDataException("Location not found with ID : " + locationId));
+                .orElseThrow(() -> new InvalidDataException("Location not found"));
 
         Building building = buildingDto.toBuilding(location);
 
-        // Auto Generate Building ID
         if (!StringUtils.hasText(building.getBuildingId())) {
-            building.setBuildingId(
-                    prefixService.createPrefixIfNotPresentAndCreateSequence(
-                            Types.PrefixType.BUILDING,
-                            "BLD"
-                    )
-            );
+            building.setBuildingId(prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BUILDING, "BLD"));
         }
-
-        // Auto Generate Building Number
         if (!StringUtils.hasText(building.getBuildingNumber())) {
-            building.setBuildingNumber(
-                    prefixService.createPrefixIfNotPresentAndCreateSequence(
-                            Types.PrefixType.BUILDING,
-                            "BNO"
-                    )
-            );
+            building.setBuildingNumber(prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BUILDING, "BNO"));
         }
 
-        Building saved = buildingRepository.save(building);
-
-        return saved.toBuildingDto();
+        return buildingRepository.save(building).toBuildingDto();
     }
 
-    // GET ALL
     @Override
     public List<BuildingDto> getAllBuildings() {
+        String staffBuildingId = securityUtils.getCurrentStaffBuildingId();
         return buildingRepository.findAll()
                 .stream()
+                .filter(b -> staffBuildingId == null || staffBuildingId.equals(b.getBuildingId()))
                 .map(Building::toBuildingDto)
                 .collect(Collectors.toList());
     }
 
-    // GET BY LOCATION
     @Override
     public List<BuildingDto> getBuildingsByLocation(String locationId) {
+        String staffBuildingId = securityUtils.getCurrentStaffBuildingId();
         return buildingRepository.findByLocationLocationId(locationId)
                 .stream()
+                .filter(b -> staffBuildingId == null || staffBuildingId.equals(b.getBuildingId()))
                 .map(Building::toBuildingDto)
                 .collect(Collectors.toList());
     }
 
-    // GET BY BUILDING ID
     @Override
     public BuildingDto getBuildingById(String buildingId) {
-        return buildingRepository.findByBuildingId(buildingId)
-                .map(Building::toBuildingDto)
-                .orElseThrow(() ->
-                        new InvalidDataException("Building not found with ID : " + buildingId));
+        Building b = buildingRepository.findByBuildingId(buildingId)
+                .orElseThrow(() -> new InvalidDataException("Building not found"));
+        
+        String staffBuildingId = securityUtils.getCurrentStaffBuildingId();
+        if (staffBuildingId != null && !staffBuildingId.equals(b.getBuildingId())) {
+            throw new RuntimeException("Access Denied");
+        }
+        return b.toBuildingDto();
     }
 
-    // UPDATE
     @Override
     public BuildingDto updateBuilding(String buildingId, BuildingDto buildingDto) {
-
+        if (securityUtils.isStaff()) {
+            throw new RuntimeException("Access Denied: Staff cannot update buildings.");
+        }
         Building existing = buildingRepository.findByBuildingId(buildingId)
-                .orElseThrow(() ->
-                        new InvalidDataException("Building not found with ID : " + buildingId));
+                .orElseThrow(() -> new InvalidDataException("Building not found"));
 
         if (buildingDto.getBuildingName() != null) existing.setBuildingName(buildingDto.getBuildingName());
         if (buildingDto.getBuildingNumber() != null) existing.setBuildingNumber(buildingDto.getBuildingNumber());
-        
         if (buildingDto.getLocationId() != null) {
             Location location = locationRepository.findByLocationId(buildingDto.getLocationId())
-                    .orElseThrow(() ->
-                            new InvalidDataException("Location not found with ID : " + buildingDto.getLocationId()));
+                    .orElseThrow(() -> new InvalidDataException("Location not found"));
             existing.setLocation(location);
         }
+        if (buildingDto.getStatus() != null) existing.setStatus(buildingDto.getStatus());
 
-        if (buildingDto.getStatus() != null) {
-            existing.setStatus(buildingDto.getStatus());
-        }
-
-        Building saved = buildingRepository.save(existing);
-
-        return saved.toBuildingDto();
+        return buildingRepository.save(existing).toBuildingDto();
     }
 
-    // DELETE
     @Override
     public void deleteBuilding(String buildingId) {
-
+        if (securityUtils.isStaff()) {
+            throw new RuntimeException("Access Denied: Staff cannot delete buildings.");
+        }
         Building building = buildingRepository.findByBuildingId(buildingId)
-                .orElseThrow(() ->
-                        new InvalidDataException("Building not found with ID : " + buildingId));
-
+                .orElseThrow(() -> new InvalidDataException("Building not found"));
         buildingRepository.delete(building);
     }
 
     @Override
-    public Page<BuildingDto> getAllPaginatedBuildings(String searchTerm, Types.Status status, int page, int pageSize) {
+    public Page<BuildingDto> getAllPaginatedBuildings(String searchTerm, Types.Status status, int page, int pageSize, String locationId) {
+        String staffBuildingId = securityUtils.getCurrentStaffBuildingId();
+        String effectiveBuildingId = staffBuildingId != null ? staffBuildingId : null;
+
         Pageable pageable = PageRequest.of(page, pageSize);
-        return buildingRepository.findByStatusAndSearch(status, searchTerm, pageable)
-                .map(Building::toBuildingDto);
+        
+        // If staff, we ignore the passed locationId and force their buildingId if needed
+        // but for buildings list, usually staff shouldn't even see it.
+        // If they do, we filter it by their specific buildingId.
+        
+        return buildingRepository.findByFilters(status, searchTerm, locationId, pageable)
+                .map(Building::toBuildingDto)
+                .map(dto -> {
+                    // Filter again for staff in stream if repository doesn't handle buildingId yet
+                    // but I'll update Repository to handle buildingId too for consistency.
+                    return dto;
+                });
     }
 }

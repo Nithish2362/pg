@@ -41,10 +41,12 @@ public class TenantController {
             @RequestParam int page,
             @RequestParam int pageSize,
             @RequestParam(required = false) String searchTerm,
-            @RequestParam(defaultValue = "ACTIVE") Types.Status status) {
+            @RequestParam(defaultValue = "ACTIVE") Types.Status status,
+            @RequestParam(required = false) String locationId,
+            @RequestParam(required = false) String buildingId) {
 
         org.springframework.data.domain.Page<TenantDto> result = tenantService.getAllPaginatedTenants(
-                searchTerm, status, page, pageSize);
+                searchTerm, status, page, pageSize, locationId, buildingId);
         return new SuccessResponse(
                 "Tenants Fetched Successfully",
                 result.getContent(),
@@ -100,5 +102,11 @@ public class TenantController {
                 "Tenant Deactivated Successfully",
                 null
         );
+    }
+
+    @PutMapping("/{tenantId}/checkout")
+    public SuccessResponse checkout(@PathVariable("tenantId") String tenantId) {
+        tenantService.checkoutTenant(tenantId);
+        return new SuccessResponse("Tenant Checked-out Successfully", null);
     }
 }
