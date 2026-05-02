@@ -213,7 +213,26 @@ public class TenantServiceImpl implements TenantService {
 
         return tenantRepository
                 .findByStatusAndSearchAndFilters(status, searchTerm, locationId, effectiveBuildingId, pageable)
-                .map(Tenant::toTenantDto);
+                .map(t -> {
+                    TenantDto dto = t.toTenantDto();
+                    dto.setBalanceAmount(calculateBalance(t));
+                    return dto;
+                });
+    }
+
+    private Double calculateBalance(Tenant t) {
+        if (Types.Status.NOT_APPROVED.equals(t.getStatus())) {
+             return paymentRepository.findByTenant(t).stream()
+                     .filter(p -> "ADVANCE".equals(p.getPaymentType()) && !"APPROVED".equals(p.getStatus()))
+                     .mapToDouble(p -> p.getAdvancePaymentAmount() != null ? p.getAdvancePaymentAmount() : p.getAmount())
+                     .sum();
+        } else if (Types.Status.ACTIVE.equals(t.getStatus())) {
+             return paymentRepository.findByTenant(t).stream()
+                     .filter(p -> "RENT".equals(p.getPaymentType()) && !"APPROVED".equals(p.getStatus()))
+                     .mapToDouble(p -> (p.getRentAmount() != null && p.getRentAmount() > 0) ? p.getRentAmount() : p.getAmount())
+                     .sum();
+        }
+        return 0.0;
     }
 
     @Override
@@ -264,6 +283,14 @@ public class TenantServiceImpl implements TenantService {
         if (!dto.getMobileNumber().matches("\\d{10}")) {
             throw new RuntimeException("Student mobile must be 10 digits");
         }
+        
+        boolean hasFather = StringUtils.hasText(dto.getFatherName()) && StringUtils.hasText(dto.getFatherMobile());
+        boolean hasMother = StringUtils.hasText(dto.getMotherName()) && StringUtils.hasText(dto.getMotherMobile());
+        boolean hasGuardian = StringUtils.hasText(dto.getGuardianName()) && StringUtils.hasText(dto.getGuardianMobile());
+        
+        if (!hasFather && !hasMother && !hasGuardian) {
+            throw new RuntimeException("At least one parent or guardian's details (Name and Mobile) are mandatory.");
+        }
     }
 
     @Override
@@ -272,6 +299,7 @@ public class TenantServiceImpl implements TenantService {
         java.util.Map<String, Long> counts = new java.util.HashMap<>();
         counts.put("awaiting", tenantRepository.countByStatusAndBuilding(Types.Status.NOT_APPROVED, staffBuildingId));
         counts.put("active", tenantRepository.countByStatusAndBuilding(Types.Status.ACTIVE, staffBuildingId));
+        counts.put("history", tenantRepository.countByStatusAndBuilding(Types.Status.INACTIVE, staffBuildingId));
         counts.put("notifications", tenantRepository.countTenantsWithPendingRentAndBuilding(staffBuildingId));
         return counts;
     }
