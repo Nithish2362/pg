@@ -76,6 +76,9 @@ public class TenantPortalController {
         dashboard.put("pgNumber", tenant.getPgNumber());
         dashboard.put("joinDate", tenant.getJoinDate());
         dashboard.put("bedId", tenant.getBedId());
+        dashboard.put("monthlyRent", tenant.getMonthlyRent());
+        dashboard.put("email", tenant.getEmail());
+        dashboard.put("mobileNumber", tenant.getMobileNumber());
 
         List<PaymentDto> payments =
                 paymentService.getPaymentsByTenant(tenant.getUserId());
@@ -95,6 +98,20 @@ public class TenantPortalController {
         return new SuccessResponse(
                 "Payments fetched successfully",
                 paymentService.getPaymentsByTenant(tenant.getUserId())
+        );
+    }
+
+    @PostMapping("/payments")
+    public SuccessResponse submitPayment(@RequestBody PaymentDto dto) {
+        TenantDto tenant = getCurrentTenant();
+        if (tenant == null) {
+            return new SuccessResponse("Tenant not found", null);
+        }
+        dto.setTenantId(tenant.getId());
+        dto.setStatus("UNAPPROVED");
+        return new SuccessResponse(
+                "Payment submitted successfully",
+                paymentService.createPayment(dto, tenant.getId())
         );
     }
 

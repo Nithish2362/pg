@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface RoomRepository extends JpaRepository<Room, String> {
 
     Optional<Room> findByRoomId(String roomId);
+    java.util.List<Room> findByFloor_FloorId(String floorId);
 
     @Query("""
         SELECT r FROM Room r

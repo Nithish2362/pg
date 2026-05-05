@@ -21,7 +21,11 @@ public class BedController {
     }
 
     @GetMapping
-    public SuccessResponse getAllBeds() {
+    public SuccessResponse getAllBeds(@RequestParam(required = false) String roomId) {
+        if (roomId != null) {
+            return new SuccessResponse("Beds Fetched Successfully",
+                    bedService.getAvailableBedsByRoom(roomId));
+        }
         return new SuccessResponse("Beds Fetched Successfully",
                 bedService.getAllBeds());
     }

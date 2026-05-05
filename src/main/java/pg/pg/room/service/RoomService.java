@@ -11,6 +11,7 @@ public interface RoomService {
     RoomDto createRoom(RoomDto roomDto);
 
     List<RoomDto> getAllRooms();
+    List<RoomDto> getRoomsByFloor(String floorId);
 
     Page<RoomDto> getAllPaginatedRooms(
             String searchTerm,

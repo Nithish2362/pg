@@ -69,6 +69,7 @@ public class TenantDto extends BaseDto {
     private String locationId;
     private String locationName;
     private Double balanceAmount;
+    private Boolean hasUnapprovedPayment;
 
     // Payment fields for initial creation
     private Double paymentAmount;

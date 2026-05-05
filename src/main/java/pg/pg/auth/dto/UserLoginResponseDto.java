@@ -13,7 +13,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserLoginResponseDto {
+    private String id;
     private String userId;
+    private String name;
+    private String locationId;
+    private String buildingId;
     private String token;
     private List<FeaturesDto> views;
     private String username;

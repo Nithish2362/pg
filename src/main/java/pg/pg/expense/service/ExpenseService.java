@@ -18,6 +18,9 @@ import pg.pg.location.repository.LocationRepository;
 import pg.pg.staff.repository.StaffRepository;
 import pg.pg.utils.SecurityUtils;
 
+import pg.pg.staff.model.Staff;
+import pg.pg.user.model.User;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -46,6 +49,7 @@ public class ExpenseService {
         return response;
     }
 
+
     public ExpenseDto createExpense(ExpenseDto dto) {
         String staffBuildingId = securityUtils.getCurrentStaffBuildingId();
         
@@ -66,6 +70,9 @@ public class ExpenseService {
                     .orElseThrow(() -> new InvalidDataException("Building not found"));
         }
 
+        Staff staff = securityUtils.getCurrentStaff().orElse(null);
+        User currentUser = securityUtils.getCurrentUser().orElse(null);
+
         Expense expense = Expense.builder()
                 .title(dto.getTitle())
                 .amount(dto.getAmount())
@@ -74,7 +81,14 @@ public class ExpenseService {
                 .remarks(dto.getRemarks())
                 .location(location)
                 .building(building)
+                .staff(staff)
                 .build();
+
+        if (currentUser != null) {
+            expense.setCreatedBy(currentUser.getFullName() != null ? currentUser.getFullName() : currentUser.getUsername());
+        } else {
+            expense.setCreatedBy("System");
+        }
 
         return toDto(expenseRepository.save(expense));
     }
@@ -130,6 +144,20 @@ public class ExpenseService {
     }
 
     private ExpenseDto toDto(Expense e) {
+        boolean isOldStaff = false;
+        String finalStaffName = e.getCreatedBy() != null ? e.getCreatedBy() : "Admin";
+
+        if (e.getStaff() != null && e.getBuilding() != null) {
+            Building currentStaffBuilding = e.getStaff().getBuilding();
+            if (currentStaffBuilding == null || !currentStaffBuilding.getBuildingId().equals(e.getBuilding().getBuildingId())) {
+                isOldStaff = true;
+            }
+            // If the staff name was overwritten in the DB
+            if (e.getCreatedBy() != null && !e.getCreatedBy().equals(e.getStaff().getName())) {
+                isOldStaff = true;
+            }
+        }
+
         return ExpenseDto.builder()
                 .id(e.getId())
                 .title(e.getTitle())
@@ -141,6 +169,10 @@ public class ExpenseService {
                 .locationName(e.getLocation() != null ? e.getLocation().getLocationName() : null)
                 .buildingId(e.getBuilding() != null ? e.getBuilding().getBuildingId() : null)
                 .buildingName(e.getBuilding() != null ? e.getBuilding().getBuildingName() : null)
+                .staffName(finalStaffName)
+                .staffNumber(e.getStaff() != null ? e.getStaff().getStaffNumber() : "ADMIN")
+                .createdDate(e.getCreatedDate())
+                .isOldStaff(isOldStaff)
                 .build();
     }
 }

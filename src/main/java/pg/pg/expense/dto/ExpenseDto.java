@@ -18,4 +18,8 @@ public class ExpenseDto {
     private String locationName;
     private String buildingId;
     private String buildingName;
+    private String staffName;
+    private String staffNumber;
+    private java.util.Date createdDate;
+    private Boolean isOldStaff;
 }

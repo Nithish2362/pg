@@ -16,7 +16,10 @@ public class FloorController {
     private final FloorService floorService;
 
     @GetMapping
-    public SuccessResponse getAllFloors() {
+    public SuccessResponse getAllFloors(@RequestParam(required = false) String buildingId) {
+        if (buildingId != null) {
+            return new SuccessResponse("Floors fetched successfully", floorService.getFloorsByBuilding(buildingId));
+        }
         return new SuccessResponse("Floors fetched successfully", floorService.getAllFloors());
     }
 

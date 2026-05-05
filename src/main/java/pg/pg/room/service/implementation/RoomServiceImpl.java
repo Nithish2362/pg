@@ -82,6 +82,14 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    public List<RoomDto> getRoomsByFloor(String floorId) {
+        return roomRepository.findByFloor_FloorId(floorId)
+                .stream()
+                .map(Room::toRoomDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Page<RoomDto> getAllPaginatedRooms(
             String searchTerm, 
             Types.Status status, 

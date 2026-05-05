@@ -23,9 +23,22 @@ public class DashboardStatsDto {
     private long paymentsUnapproved;
     private double pendingRevenue;
 
+    // Detailed Revenue Stats
+    private double advancePaidThisMonth;
+    private double rentPaidThisMonth;
+    private double advanceBalance;
+    private double rentBalance;
+
+    // Staff & Expense Stats
+    private long totalStaff;
+    private double totalExpenses;
+    private double totalProfit;
+
     // Resident stats
     private long activeResidents;
     private long inactiveResidents;
+    private long pendingApprovalTenants;
+    private long advanceNotPaidResidents;
     
     // Monthly stats
     private long newTenantsThisMonth;

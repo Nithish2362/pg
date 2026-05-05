@@ -6,6 +6,7 @@ package pg.pg.payment.dto;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -36,4 +37,12 @@ public class PaymentDto {
     private Double rentAmount;
     private Boolean rentPaid;
     private String paymentType;
+
+    private String transactionId;
+    private String staffName;
+    private String staffRole;
+    private String staffUsername;
+    private String staffBuildingName;
+    private LocalTime paymentTime;
+    private String screenshotUrl;
 }

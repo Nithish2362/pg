@@ -20,6 +20,8 @@ import pg.pg.feature.service.FeatureViewService;
 import pg.pg.user.model.User;
 import pg.pg.user.repository.UserRepository;
 import pg.pg.config.JwtUtil;
+import pg.pg.staff.repository.StaffRepository;
+import pg.pg.tenant.repository.TenantRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +37,8 @@ public class AuthController {
     private final PasswordEncoder encoder;
     private final JwtUtil jwtUtil;
     private final pg.pg.utils.EmailService emailService;
+    private final StaffRepository staffRepository;
+    private final TenantRepository tenantRepository;
 
     @PostMapping("/login")
     public SuccessResponse authenticateUser(@RequestBody LoginRequest loginRequest) {
@@ -47,7 +51,7 @@ public class AuthController {
             Optional<User> userOpt = Optional.empty();
             if (loginId.contains("@")) {
                 userOpt = userRepository.findByEmail(loginId);
-            } else if (loginId.startsWith("PG-")) {
+            } else if (loginId.startsWith("TNT-")) {
                 userOpt = userRepository.findByPgNumber(loginId);
             } else if (loginId.matches("\\d{10}")) {
                 userOpt = userRepository.findByMobileNumber(loginId);
@@ -79,12 +83,30 @@ public class AuthController {
 
         UserLoginResponseDto loginResponse = UserLoginResponseDto.builder()
                 .userId(dbUser.getId().toString())
+                .id(dbUser.getId().toString())
+                .name(dbUser.getFullName())
                 .token(jwt)
                 .username(dbUser.getUsername())
                 .role(dbUser.getRole())
                 .isFirstLogin(dbUser.getIsFirstLogin())
                 .views(views)
                 .build();
+
+        if ("STAFF".equals(dbUser.getRole())) {
+            staffRepository.findByStaffNumber(dbUser.getUsername()).ifPresent(staff -> {
+                loginResponse.setId(staff.getId());
+                loginResponse.setName(staff.getName());
+                loginResponse.setLocationId(staff.getLocation() != null ? staff.getLocation().getLocationId() : null);
+                loginResponse.setBuildingId(staff.getBuilding() != null ? staff.getBuilding().getBuildingId() : null);
+            });
+        } else if ("TENANT".equals(dbUser.getRole())) {
+            tenantRepository.findByUserId(dbUser.getId()).ifPresent(tenant -> {
+                loginResponse.setId(tenant.getId());
+                loginResponse.setName(tenant.getStudentName());
+                loginResponse.setLocationId(tenant.getBed() != null && tenant.getBed().getRoom() != null && tenant.getBed().getRoom().getFloor() != null && tenant.getBed().getRoom().getFloor().getBuilding() != null && tenant.getBed().getRoom().getFloor().getBuilding().getLocation() != null ? tenant.getBed().getRoom().getFloor().getBuilding().getLocation().getLocationId() : null);
+                loginResponse.setBuildingId(tenant.getBed() != null && tenant.getBed().getRoom() != null && tenant.getBed().getRoom().getFloor() != null && tenant.getBed().getRoom().getFloor().getBuilding() != null ? tenant.getBed().getRoom().getFloor().getBuilding().getBuildingId() : null);
+            });
+        }
 
         return new SuccessResponse("Login successful", loginResponse);
     }
@@ -143,7 +165,7 @@ public class AuthController {
 
         if (loginId.contains("@")) {
             userOpt = userRepository.findByEmail(loginId);
-        } else if (loginId.startsWith("PG-")) {
+        } else if (loginId.startsWith("TNT-")) {
             userOpt = userRepository.findByPgNumber(loginId);
         } else if (loginId.matches("\\d{10}")) {
             userOpt = userRepository.findByMobileNumber(loginId);

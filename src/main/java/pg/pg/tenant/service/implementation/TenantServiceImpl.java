@@ -61,7 +61,7 @@ public class TenantServiceImpl implements TenantService {
         Bed oldBed = null;
 
         if (!isUpdate) {
-            tenant.setPgNumber(prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BED, "PG"));
+            tenant.setPgNumber(prefixService.createPrefixIfNotPresentAndCreateSequence(Types.PrefixType.BED, "TNT"));
             tenant.setJoinDate(LocalDate.now());
             tenant.setStatus(Types.Status.NOT_APPROVED);
             tenant.setRentStartDate(dto.getRentStartDate());
@@ -154,6 +154,16 @@ public class TenantServiceImpl implements TenantService {
             String currentMonth = now.getMonth().name().substring(0, 1).toUpperCase() + 
                                   now.getMonth().name().substring(1).toLowerCase();
 
+            // Audit details
+            pg.pg.user.model.User currentUser = securityUtils.getCurrentUser().orElse(null);
+            String staffRole = currentUser != null ? currentUser.getRole() : "ADMIN";
+            String staffUsername = currentUser != null ? currentUser.getUsername() : "Admin";
+            String staffName = currentUser != null ? currentUser.getFullName() : "Admin";
+            String staffBuildingName = "-";
+            if (currentUser != null && "STAFF".equals(currentUser.getRole())) {
+                staffBuildingName = securityUtils.getCurrentStaff().map(s -> s.getBuilding() != null ? s.getBuilding().getBuildingName() : "-").orElse("-");
+            }
+
             Payment advancePayment = Payment.builder()
                     .tenant(tenant)
                     .amount(amount) 
@@ -169,7 +179,11 @@ public class TenantServiceImpl implements TenantService {
                     .status("PENDING")
                     .remarks("Advance payment at registration")
                     .isApproved(false)
-                    .receiptNo(amount > 0 ? "REC-PG-" + String.valueOf(System.currentTimeMillis()).substring(7) : null)
+                    .receiptNo(amount > 0 ? "RECEIPT-" + String.valueOf(System.currentTimeMillis()).substring(7) : null)
+                    .staffName(staffName)
+                    .staffRole(staffRole)
+                    .staffUsername(staffUsername)
+                    .staffBuildingName(staffBuildingName)
                     .build();
 
             paymentRepository.save(advancePayment);
@@ -216,6 +230,12 @@ public class TenantServiceImpl implements TenantService {
                 .map(t -> {
                     TenantDto dto = t.toTenantDto();
                     dto.setBalanceAmount(calculateBalance(t));
+                    
+                    // Check for any unapproved payments
+                    boolean hasUnapproved = paymentRepository.findByTenant(t).stream()
+                        .anyMatch(p -> "UNAPPROVED".equals(p.getStatus()));
+                    dto.setHasUnapprovedPayment(hasUnapproved);
+                    
                     return dto;
                 });
     }

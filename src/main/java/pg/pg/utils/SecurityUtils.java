@@ -43,10 +43,14 @@ public class SecurityUtils {
      * Returns the buildingId if the user is STAFF, otherwise returns null.
      */
     public String getCurrentStaffBuildingId() {
-        return getCurrentUser()
-                .filter(u -> "STAFF".equals(u.getRole()))
-                .flatMap(u -> staffRepository.findByStaffNumber(u.getPgNumber()))
+        return getCurrentStaff()
                 .map(s -> s.getBuilding() != null ? s.getBuilding().getBuildingId() : null)
                 .orElse(null);
+    }
+
+    public Optional<Staff> getCurrentStaff() {
+        return getCurrentUser()
+                .filter(u -> "STAFF".equals(u.getRole()))
+                .flatMap(u -> staffRepository.findByStaffNumber(u.getUsername()));
     }
 }

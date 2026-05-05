@@ -73,6 +73,16 @@ public class PaymentServiceImpl implements PaymentService {
         boolean isRent = remarks.contains("rent");
         String paymentType = dto.getPaymentType() != null ? dto.getPaymentType() : (isRent ? "RENT" : "ADVANCE");
 
+        // Audit details
+        pg.pg.user.model.User user = securityUtils.getCurrentUser().orElse(null);
+        String staffRole = user != null ? user.getRole() : "ADMIN";
+        String staffUsername = user != null ? user.getUsername() : "Admin";
+        String staffName = user != null ? user.getFullName() : "Admin";
+        String staffBuildingName = "-";
+        if (user != null && "STAFF".equals(user.getRole())) {
+            staffBuildingName = securityUtils.getCurrentStaff().map(s -> s.getBuilding() != null ? s.getBuilding().getBuildingName() : "-").orElse("-");
+        }
+
         Payment payment = Payment.builder()
                 .tenant(tenant)
                 .amount(amount)
@@ -89,6 +99,13 @@ public class PaymentServiceImpl implements PaymentService {
                 .remarks(dto.getRemarks())
                 .receiptNo(dto.getReceiptNo())
                 .isApproved(dto.getIsApproved() != null ? dto.getIsApproved() : false)
+                .transactionId(dto.getTransactionId())
+                .screenshotUrl(dto.getScreenshotUrl())
+                .paymentTime(java.time.LocalTime.now())
+                .staffName(staffName)
+                .staffRole(staffRole)
+                .staffUsername(staffUsername)
+                .staffBuildingName(staffBuildingName)
                 .build();
 
         return paymentRepository.save(payment).toDto();
@@ -133,6 +150,20 @@ public class PaymentServiceImpl implements PaymentService {
         
         String newStatus = dto.getStatus() != null ? dto.getStatus() : status;
         payment.setStatus(newStatus);
+
+        // Capture auditor details on update ONLY if they are not already set
+        // This prevents an Admin (approver) from overwriting the Staff (receiver)
+        if (payment.getStaffName() == null || payment.getStaffName().isEmpty() || "Admin".equals(payment.getStaffName())) {
+            pg.pg.user.model.User currentUser = securityUtils.getCurrentUser().orElse(null);
+            payment.setStaffName(currentUser != null ? currentUser.getFullName() : "Admin");
+            payment.setStaffRole(currentUser != null ? currentUser.getRole() : "ADMIN");
+            payment.setStaffUsername(currentUser != null ? currentUser.getUsername() : "Admin");
+            if (currentUser != null && "STAFF".equals(currentUser.getRole())) {
+                payment.setStaffBuildingName(securityUtils.getCurrentStaff().map(s -> s.getBuilding() != null ? s.getBuilding().getBuildingName() : "-").orElse("-"));
+            } else {
+                payment.setStaffBuildingName("-");
+            }
+        }
         
         payment.setRemarks(dto.getRemarks());
         payment.setReceiptNo(dto.getReceiptNo());
@@ -142,6 +173,8 @@ public class PaymentServiceImpl implements PaymentService {
                 payment.setStatus("APPROVED");
             }
         }
+        if (dto.getTransactionId() != null) payment.setTransactionId(dto.getTransactionId());
+        if (dto.getScreenshotUrl() != null) payment.setScreenshotUrl(dto.getScreenshotUrl());
 
         Payment saved = paymentRepository.save(payment);
 

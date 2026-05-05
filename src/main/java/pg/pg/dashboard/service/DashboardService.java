@@ -10,6 +10,8 @@ import pg.pg.payment.model.Payment;
 import pg.pg.payment.repository.PaymentRepository;
 import pg.pg.tenant.model.Tenant;
 import pg.pg.tenant.repository.TenantRepository;
+import pg.pg.expense.repository.ExpenseRepository;
+import pg.pg.staff.repository.StaffRepository;
 import pg.pg.utils.SecurityUtils;
 import pg.pg.utils.Types;
 
@@ -29,6 +31,8 @@ public class DashboardService {
     private final TenantRepository tenantRepository;
     private final PaymentRepository paymentRepository;
     private final BedRepository bedRepository;
+    private final StaffRepository staffRepository;
+    private final ExpenseRepository expenseRepository;
     private final SecurityUtils securityUtils;
 
     public DashboardStatsDto getStats(String locationId, String buildingId) {
@@ -50,8 +54,9 @@ public class DashboardService {
             })
             .collect(Collectors.toList());
 
-        long activeTenants = tenants.stream().filter(t -> "ACTIVE".equals(t.getStatus())).count();
-        long inactiveTenants = tenants.stream().filter(t -> "INACTIVE".equals(t.getStatus())).count();
+        long activeTenants = tenants.stream().filter(t -> Types.Status.ACTIVE.equals(t.getStatus())).count();
+        long inactiveTenants = tenants.stream().filter(t -> Types.Status.INACTIVE.equals(t.getStatus())).count();
+        long pendingApprovalTenants = tenants.stream().filter(t -> Types.Status.NOT_APPROVED.equals(t.getStatus())).count();
             
         LocalDate now = LocalDate.now();
         long newTenantsThisMonth = tenants.stream()
@@ -111,6 +116,50 @@ public class DashboardService {
         long occupiedBeds = totalBeds - availableBeds;
         double occupancyPercentage = totalBeds > 0 ? (double) occupiedBeds / totalBeds * 100 : 0;
 
+        // 4. Filter Staff
+        long totalStaff = staffRepository.findAll().stream()
+            .filter(s -> {
+                if (s.getBuilding() == null) return false;
+                boolean matchBuilding = effectiveBuildingId == null || effectiveBuildingId.equals(s.getBuilding().getBuildingId());
+                boolean matchLocation = locationId == null || (s.getLocation() != null && locationId.equals(s.getLocation().getLocationId()));
+                return matchBuilding && matchLocation;
+            }).count();
+
+        // 5. Filter Expenses
+        double totalExpenses = expenseRepository.findAll().stream()
+            .filter(e -> {
+                if (e.getBuilding() == null) return false;
+                boolean matchBuilding = effectiveBuildingId == null || effectiveBuildingId.equals(e.getBuilding().getBuildingId());
+                boolean matchLocation = locationId == null || (e.getLocation() != null && locationId.equals(e.getLocation().getLocationId()));
+                return matchBuilding && matchLocation;
+            }).mapToDouble(e -> e.getAmount() != null ? e.getAmount() : 0.0).sum();
+
+        // 6. Detailed Revenue (This Month)
+        double advancePaidThisMonth = payments.stream()
+            .filter(p -> p.getIsApproved() != null && p.getIsApproved() && "ADVANCE".equals(p.getPaymentType()) &&
+                    p.getPaymentDate() != null && p.getPaymentDate().getMonth() == now.getMonth() && p.getPaymentDate().getYear() == now.getYear())
+            .mapToDouble(Payment::getAmount).sum();
+
+        double rentPaidThisMonth = payments.stream()
+            .filter(p -> p.getIsApproved() != null && p.getIsApproved() && "RENT".equals(p.getPaymentType()) &&
+                    p.getPaymentDate() != null && p.getPaymentDate().getMonth() == now.getMonth() && p.getPaymentDate().getYear() == now.getYear())
+            .mapToDouble(Payment::getAmount).sum();
+
+        double advanceBalance = payments.stream()
+            .filter(p -> (p.getIsApproved() == null || !p.getIsApproved()) && "ADVANCE".equals(p.getPaymentType()))
+            .mapToDouble(Payment::getAmount).sum();
+
+        double rentBalance = payments.stream()
+            .filter(p -> (p.getIsApproved() == null || !p.getIsApproved()) && "RENT".equals(p.getPaymentType()))
+            .mapToDouble(Payment::getAmount).sum();
+
+        double totalProfit = totalRevenue - totalExpenses;
+
+        long advanceNotPaidResidents = payments.stream()
+            .filter(p -> "ADVANCE".equals(p.getPaymentType()) && (p.getIsApproved() == null || !p.getIsApproved()))
+            .map(p -> p.getTenant().getId())
+            .distinct().count();
+
         // Monthly Revenue Graph Data
         Map<String, Double> monthlyRevMap = new LinkedHashMap<>();
         for (int i = 5; i >= 0; i--) {
@@ -135,6 +184,17 @@ public class DashboardService {
                 .vacatedTenantsThisMonth(vacatedTenantsThisMonth)
                 .totalRevenue(totalRevenue)
                 .pendingRevenue(pendingRevenue)
+                .advancePaidThisMonth(advancePaidThisMonth)
+                .rentPaidThisMonth(rentPaidThisMonth)
+                .advanceBalance(advanceBalance)
+                .rentBalance(rentBalance)
+                .totalStaff(totalStaff)
+                .totalExpenses(totalExpenses)
+                .totalProfit(totalProfit)
+                .activeResidents(activeTenants)
+                .inactiveResidents(inactiveTenants)
+                .pendingApprovalTenants(pendingApprovalTenants)
+                .advanceNotPaidResidents(advanceNotPaidResidents)
                 .paymentsDone(paymentsDone)
                 .paymentsPending(paymentsPending)
                 .paymentsUnapproved(paymentsUnapproved)

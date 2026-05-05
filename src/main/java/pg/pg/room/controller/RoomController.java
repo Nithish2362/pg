@@ -21,7 +21,11 @@ public class RoomController {
     }
 
     @GetMapping
-    public SuccessResponse getAllRooms() {
+    public SuccessResponse getAllRooms(@RequestParam(required = false) String floorId) {
+        if (floorId != null) {
+            return new SuccessResponse("Rooms Fetched Successfully",
+                    roomService.getRoomsByFloor(floorId));
+        }
         return new SuccessResponse("Rooms Fetched Successfully",
                 roomService.getAllRooms());
     }

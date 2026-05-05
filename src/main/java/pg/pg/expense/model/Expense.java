@@ -38,4 +38,8 @@ public class Expense extends BaseModel {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "building_ref_id")
     private Building building;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "staff_ref_id")
+    private pg.pg.staff.model.Staff staff;
 }

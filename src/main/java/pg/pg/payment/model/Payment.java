@@ -9,6 +9,7 @@ import pg.pg.payment.dto.PaymentDto;
 import pg.pg.tenant.model.Tenant;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "payments")
@@ -67,6 +68,15 @@ public class Payment {
     @Column(name = "payment_type")
     private String paymentType;
 
+    private String transactionId;
+    private String staffName;
+    private String staffRole;
+    private String staffUsername;
+    private String staffBuildingName;
+    private LocalTime paymentTime;
+    @Column(columnDefinition = "TEXT")
+    private String screenshotUrl;
+
     public PaymentDto toDto() {
         return PaymentDto.builder()
                 .id(id)
@@ -87,6 +97,13 @@ public class Payment {
                 .rentAmount(rentAmount)
                 .rentPaid(rentPaid)
                 .paymentType(paymentType)
+                .transactionId(transactionId)
+                .staffName(staffName)
+                .staffRole(staffRole)
+                .staffUsername(staffUsername)
+                .staffBuildingName(staffBuildingName)
+                .paymentTime(paymentTime)
+                .screenshotUrl(screenshotUrl)
                 .build();
     }
 }

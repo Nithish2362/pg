@@ -16,8 +16,9 @@ import java.util.List;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    // Tenant.id is String
     List<Payment> findByTenant_IdOrderByPaymentDateDesc(String tenantId);
+
+
 
     List<Payment> findByTenant(pg.pg.tenant.model.Tenant tenant);
 
