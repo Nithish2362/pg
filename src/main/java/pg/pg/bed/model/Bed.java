@@ -40,6 +40,10 @@ public class Bed extends BaseModel {
                 .bedNumber(this.bedNumber)
                 .isOccupied(this.isOccupied)
                 .roomId(this.room != null ? this.room.getRoomId() : null)
+                .roomNumber(this.room != null ? this.room.getRoomNumber() : null)
+                .floorName(this.room != null && this.room.getFloor() != null ? this.room.getFloor().getFloorName() : null)
+                .buildingName(this.room != null && this.room.getFloor() != null && this.room.getFloor().getBuilding() != null ? this.room.getFloor().getBuilding().getBuildingName() : null)
+                .locationName(this.room != null && this.room.getFloor() != null && this.room.getFloor().getBuilding() != null && this.room.getFloor().getBuilding().getLocation() != null ? this.room.getFloor().getBuilding().getLocation().getLocationName() : null)
                 .status(this.getStatus())
                 .build();
     }

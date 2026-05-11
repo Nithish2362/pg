@@ -16,6 +16,10 @@ public class BedDto extends pg.pg.utils.BaseDto {
     private String bedNumber;
     private Boolean isOccupied;
     private String roomId;
+    private String roomNumber;
+    private String floorName;
+    private String buildingName;
+    private String locationName;
 
     public Bed toBed() {
         return Bed.builder()

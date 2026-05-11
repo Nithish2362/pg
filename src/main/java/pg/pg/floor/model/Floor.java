@@ -44,6 +44,10 @@ public class Floor extends BaseModel {
                 .floorNumber(this.floorNumber)
                 .floorName(this.floorName)
                 .buildingId(this.building != null ? this.building.getBuildingId() : null)
+                .buildingName(this.building != null ? this.building.getBuildingName() : null)
+                .locationName(this.building != null && this.building.getLocation() != null
+                        ? this.building.getLocation().getLocationName()
+                        : null)
                 .status(this.getStatus())
                 .build();
     }

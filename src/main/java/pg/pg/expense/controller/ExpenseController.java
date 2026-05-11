@@ -21,8 +21,9 @@ public class ExpenseController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "") String searchTerm,
+            @RequestParam(required = false) String locationId,
             @RequestParam(required = false) String buildingId) {
-        return ResponseEntity.ok(expenseService.getAllExpenses(page, pageSize, searchTerm, buildingId));
+        return ResponseEntity.ok(expenseService.getAllExpenses(page, pageSize, searchTerm, locationId, buildingId));
     }
 
     @PostMapping

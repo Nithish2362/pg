@@ -18,6 +18,8 @@ public class FloorDto extends BaseDto {
     private String floorNumber;
     private String floorName;
     private String buildingId;        // Business Building ID
+    private String buildingName;
+    private String locationName;
 
     /**
      * Convert DTO to Entity

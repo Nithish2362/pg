@@ -27,8 +27,11 @@ public interface RoomRepository extends JpaRepository<Room, String> {
         AND (:buildingId IS NULL OR b.buildingId = :buildingId)
         AND (:floorId IS NULL OR f.floorId = :floorId)
         AND (:searchTerm IS NULL OR :searchTerm = ''
-             OR LOWER(r.roomNumber) LIKE LOWER(CONCAT(:searchTerm, '%'))
-             OR LOWER(r.roomType) LIKE LOWER(CONCAT(:searchTerm, '%')))
+             OR LOWER(r.roomNumber) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+             OR LOWER(r.roomId) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+             OR LOWER(r.roomType) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+             OR LOWER(f.floorName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+             OR LOWER(b.buildingName) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
     """)
     Page<Room> findByFilters(
             @Param("status") Types.Status status,

@@ -36,12 +36,12 @@ public class ExpenseService {
     private final StaffRepository staffRepository;
     private final SecurityUtils securityUtils;
 
-    public Map<String, Object> getAllExpenses(int page, int pageSize, String searchTerm, String buildingId) {
+    public Map<String, Object> getAllExpenses(int page, int pageSize, String searchTerm, String locationId, String buildingId) {
         String staffBuildingId = securityUtils.getCurrentStaffBuildingId();
         String effectiveBuildingId = staffBuildingId != null ? staffBuildingId : buildingId;
         
         Pageable pageable = PageRequest.of(page, pageSize);
-        Page<Expense> expensePage = expenseRepository.findBySearchTermAndBuilding(searchTerm, effectiveBuildingId, pageable);
+        Page<Expense> expensePage = expenseRepository.findByFilters(searchTerm, locationId, effectiveBuildingId, pageable);
 
         Map<String, Object> response = new HashMap<>();
         response.put("response", expensePage.getContent().stream().map(this::toDto).collect(Collectors.toList()));

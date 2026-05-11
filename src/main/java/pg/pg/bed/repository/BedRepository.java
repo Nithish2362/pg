@@ -30,7 +30,11 @@ public interface BedRepository extends JpaRepository<Bed, String> {
         AND (:floorId IS NULL OR f.floorId = :floorId)
         AND (:roomId IS NULL OR r.roomId = :roomId)
         AND (:searchTerm IS NULL OR :searchTerm = '' 
-             OR LOWER(b.bedNumber) LIKE LOWER(CONCAT(:searchTerm, '%')))
+             OR LOWER(b.bedNumber) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+             OR LOWER(b.bedId) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+             OR LOWER(r.roomNumber) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+             OR LOWER(f.floorName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+             OR LOWER(bl.buildingName) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
     """)
     Page<Bed> findByFilters(
             @Param("status") Types.Status status,

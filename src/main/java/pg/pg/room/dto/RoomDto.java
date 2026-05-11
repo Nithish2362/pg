@@ -21,6 +21,9 @@ public class RoomDto extends BaseDto {
     private Double monthlyRent;
     private Integer totalBeds;
     private String floorId;        // Business Floor ID
+    private String floorName;
+    private String buildingName;
+    private String locationName;
 
     /**
      * Convert DTO to Entity

@@ -56,6 +56,9 @@ public class Room extends BaseModel {
                 .monthlyRent(this.monthlyRent)
                 .totalBeds(this.totalBeds)
                 .floorId(this.floor != null ? this.floor.getFloorId() : null)
+                .floorName(this.floor != null ? this.floor.getFloorName() : null)
+                .buildingName(this.floor != null && this.floor.getBuilding() != null ? this.floor.getBuilding().getBuildingName() : null)
+                .locationName(this.floor != null && this.floor.getBuilding() != null && this.floor.getBuilding().getLocation() != null ? this.floor.getBuilding().getLocation().getLocationName() : null)
                 .status(this.getStatus())
                 .build();
     }

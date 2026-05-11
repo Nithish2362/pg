@@ -27,8 +27,10 @@ public interface FloorRepository extends JpaRepository<Floor, String> {
         AND (:locationId IS NULL OR loc.locationId = :locationId)
         AND (:buildingId IS NULL OR bl.buildingId = :buildingId)
         AND (:searchTerm IS NULL OR :searchTerm = '' 
-             OR LOWER(f.floorName) LIKE LOWER(CONCAT(:searchTerm, '%'))
-             OR LOWER(f.floorId) LIKE LOWER(CONCAT(:searchTerm, '%')))
+             OR LOWER(f.floorName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+             OR LOWER(f.floorId) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+             OR LOWER(bl.buildingName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+             OR LOWER(loc.locationName) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
     """)
     Page<Floor> findByFilters(
             @Param("status") Types.Status status,

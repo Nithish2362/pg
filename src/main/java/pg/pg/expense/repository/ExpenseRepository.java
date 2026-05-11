@@ -12,13 +12,18 @@ public interface ExpenseRepository extends JpaRepository<Expense, String> {
     @Query("""
         SELECT e FROM Expense e 
         LEFT JOIN e.building bl
-        WHERE (:buildingId IS NULL OR bl.buildingId = :buildingId)
-        AND (LOWER(e.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR 
-             LOWER(e.category) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
+        LEFT JOIN e.location loc
+        WHERE (:locationId IS NULL OR loc.locationId = :locationId)
+        AND (:buildingId IS NULL OR bl.buildingId = :buildingId)
+        AND (:searchTerm IS NULL OR :searchTerm = '' 
+             OR LOWER(e.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) 
+             OR LOWER(e.category) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+             OR LOWER(e.remarks) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
         ORDER BY e.expenseDate DESC
     """)
-    Page<Expense> findBySearchTermAndBuilding(
+    Page<Expense> findByFilters(
             @Param("searchTerm") String searchTerm, 
+            @Param("locationId") String locationId,
             @Param("buildingId") String buildingId, 
             Pageable pageable
     );
