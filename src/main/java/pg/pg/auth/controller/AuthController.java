@@ -37,6 +37,7 @@ public class AuthController {
     private final PasswordEncoder encoder;
     private final JwtUtil jwtUtil;
     private final pg.pg.utils.EmailService emailService;
+    private final pg.pg.utils.SmsService smsService;
     private final StaffRepository staffRepository;
     private final TenantRepository tenantRepository;
 
@@ -180,10 +181,21 @@ public class AuthController {
         user.setOtpExpiry(java.time.LocalDateTime.now().plusMinutes(10));
         userRepository.save(user);
 
-        // Send OTP via email
-        emailService.sendOtp(user.getEmail(), otp);
+        boolean sent = false;
+        if (user.getMobileNumber() != null && !user.getMobileNumber().isEmpty()) {
+            smsService.sendOtp(user.getMobileNumber(), otp);
+            sent = true;
+        }
+        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+            emailService.sendOtp(user.getEmail(), otp);
+            sent = true;
+        }
 
-        return new SuccessResponse("OTP sent to your registered email.", null);
+        if (!sent) {
+            throw new RuntimeException("No registered email or mobile number found for this user.");
+        }
+
+        return new SuccessResponse("OTP sent successfully.", null);
     }
 
     @PostMapping("/reset-password")
@@ -205,5 +217,116 @@ public class AuthController {
         userRepository.save(user);
 
         return new SuccessResponse("Password reset successful!", null);
+    }
+
+    @PostMapping("/send-login-otp")
+    public SuccessResponse sendLoginOtp(@RequestBody ForgotPasswordRequest request) {
+        String loginId = request.getLoginId();
+        Optional<User> userOpt;
+
+        if (loginId.contains("@")) {
+            userOpt = userRepository.findByEmail(loginId);
+        } else if (loginId.startsWith("TNT-")) {
+            userOpt = userRepository.findByPgNumber(loginId);
+        } else if (loginId.matches("\\d{10}")) {
+            userOpt = userRepository.findByMobileNumber(loginId);
+        } else {
+            userOpt = userRepository.findByUsername(loginId);
+        }
+
+        User user = userOpt.orElseThrow(() -> new RuntimeException("User not found"));
+
+        String otp = String.valueOf((int)(Math.random() * 900000 + 100000)); // 6 digit OTP
+        user.setOtp(otp);
+        user.setOtpExpiry(java.time.LocalDateTime.now().plusMinutes(10));
+        userRepository.save(user);
+
+        boolean sent = false;
+        if (user.getMobileNumber() != null && !user.getMobileNumber().isEmpty()) {
+            smsService.sendOtp(user.getMobileNumber(), otp);
+            sent = true;
+        }
+        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+            emailService.sendOtp(user.getEmail(), otp);
+            sent = true;
+        }
+
+        if (!sent) {
+            throw new RuntimeException("No registered email or mobile number found for this user.");
+        }
+
+        return new SuccessResponse("Login OTP sent successfully.", null);
+    }
+
+    @PostMapping("/verify-login-otp")
+    public SuccessResponse verifyLoginOtp(@RequestBody ResetPasswordRequest request) {
+        String loginId = request.getUsername();
+        Optional<User> userOpt;
+
+        if (loginId.contains("@")) {
+            userOpt = userRepository.findByEmail(loginId);
+        } else if (loginId.startsWith("TNT-")) {
+            userOpt = userRepository.findByPgNumber(loginId);
+        } else if (loginId.matches("\\d{10}")) {
+            userOpt = userRepository.findByMobileNumber(loginId);
+        } else {
+            userOpt = userRepository.findByUsername(loginId);
+        }
+
+        User user = userOpt.orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getOtp() == null || !user.getOtp().equals(request.getOtp())) {
+            throw new RuntimeException("Invalid OTP!");
+        }
+
+        if (user.getOtpExpiry().isBefore(java.time.LocalDateTime.now())) {
+            throw new RuntimeException("OTP expired!");
+        }
+
+        // Clear OTP
+        user.setOtp(null);
+        user.setOtpExpiry(null);
+        userRepository.save(user);
+
+        org.springframework.security.core.userdetails.UserDetails userDetails = 
+            new org.springframework.security.core.userdetails.User(
+                user.getUsername(), "", new java.util.ArrayList<>()
+            );
+
+        String jwt = jwtUtil.generateToken(userDetails);
+
+        List<Features> features = featureViewService.getAllFeatures();
+        List<FeaturesDto> views = features.stream()
+                .map(Features::toFeaturesDto)
+                .toList();
+
+        UserLoginResponseDto loginResponse = UserLoginResponseDto.builder()
+                .userId(user.getId().toString())
+                .id(user.getId().toString())
+                .name(user.getFullName())
+                .token(jwt)
+                .username(user.getUsername())
+                .role(user.getRole())
+                .isFirstLogin(user.getIsFirstLogin())
+                .views(views)
+                .build();
+
+        if ("STAFF".equals(user.getRole())) {
+            staffRepository.findByStaffNumber(user.getUsername()).ifPresent(staff -> {
+                loginResponse.setId(staff.getId());
+                loginResponse.setName(staff.getName());
+                loginResponse.setLocationId(staff.getLocation() != null ? staff.getLocation().getLocationId() : null);
+                loginResponse.setBuildingId(staff.getBuilding() != null ? staff.getBuilding().getBuildingId() : null);
+            });
+        } else if ("TENANT".equals(user.getRole())) {
+            tenantRepository.findByUserId(user.getId()).ifPresent(tenant -> {
+                loginResponse.setId(tenant.getId());
+                loginResponse.setName(tenant.getStudentName());
+                loginResponse.setLocationId(tenant.getBed() != null && tenant.getBed().getRoom() != null && tenant.getBed().getRoom().getFloor() != null && tenant.getBed().getRoom().getFloor().getBuilding() != null && tenant.getBed().getRoom().getFloor().getBuilding().getLocation() != null ? tenant.getBed().getRoom().getFloor().getBuilding().getLocation().getLocationId() : null);
+                loginResponse.setBuildingId(tenant.getBed() != null && tenant.getBed().getRoom() != null && tenant.getBed().getRoom().getFloor() != null && tenant.getBed().getRoom().getFloor().getBuilding() != null ? tenant.getBed().getRoom().getFloor().getBuilding().getBuildingId() : null);
+            });
+        }
+
+        return new SuccessResponse("OTP Login successful", loginResponse);
     }
 }

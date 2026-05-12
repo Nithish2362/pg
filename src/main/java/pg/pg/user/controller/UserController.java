@@ -14,6 +14,27 @@ import java.util.List;
 public class UserController {
 
     private final FeatureViewService featureViewService;
+    private final pg.pg.user.repository.UserRepository userRepository;
+
+    @PostMapping("/update-profile")
+    public SuccessResponse updateProfile(@RequestBody pg.pg.user.model.User profileData) {
+        pg.pg.user.model.User user = userRepository.findByUsername(profileData.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setFullName(profileData.getFullName());
+        user.setMobileNumber(profileData.getMobileNumber());
+        user.setEmail(profileData.getEmail());
+        user.setAge(profileData.getAge());
+
+        userRepository.save(user);
+        return new SuccessResponse("Profile updated successfully", user);
+    }
+
+    @GetMapping("/profile")
+    public SuccessResponse getProfile(@RequestParam String username) {
+        return new SuccessResponse("Profile fetched", userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found")));
+    }
 
     @GetMapping("/get-all")
     public SuccessResponse getAllUsers() {
