@@ -13,6 +13,7 @@ import pg.pg.payment.service.PaymentService;
 import pg.pg.tenant.model.Tenant;
 import pg.pg.tenant.repository.TenantRepository;
 import pg.pg.utils.SecurityUtils;
+import pg.pg.common.service.NotificationService;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final TenantRepository tenantRepository;
     private final SecurityUtils securityUtils;
+    private final NotificationService notificationService;
 
     @Override
     public List<PaymentDto> getAllPayments() {
@@ -290,5 +292,64 @@ public class PaymentServiceImpl implements PaymentService {
         counts.put("RENT_APPROVED", paymentRepository.countByFiltersAndType("APPROVED", "RENT", locationId, effectiveBuildingId));
         
         return counts;
+        
+    }
+
+    @Override
+    public void shareReceipt(Long id, String target, String type) {
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+        Tenant tenant = payment.getTenant();
+        if (tenant == null) {
+            throw new RuntimeException("Tenant not associated with this payment");
+        }
+
+        String subject = "Payment Receipt - " + (payment.getReceiptNo() != null ? payment.getReceiptNo() : "Happy Stay");
+        String message = String.format(
+            "Dear %s,\n\n" +
+            "We have received a payment of Rs.%.2f for %s (%s %d).\n" +
+            "Payment Mode: %s\n" +
+            "Receipt Number: %s\n" +
+            "Status: %s\n\n" +
+            "Thank you for choosing Happy Stay!",
+            tenant.getStudentName(),
+            payment.getAmount(),
+            payment.getPaymentType(),
+            payment.getPaymentMonth(),
+            payment.getPaymentYear(),
+            payment.getPaymentMode(),
+            payment.getReceiptNo() != null ? payment.getReceiptNo() : "N/A",
+            payment.getStatus()
+        );
+
+        if ("tenant".equalsIgnoreCase(target)) {
+            if ("email".equalsIgnoreCase(type)) {
+                notificationService.sendEmail(tenant.getEmail(), subject, message);
+            } else if ("sms".equalsIgnoreCase(type)) {
+                notificationService.sendSms(tenant.getMobileNumber(), message);
+            }
+        } else if ("parent".equalsIgnoreCase(target)) {
+            if ("email".equalsIgnoreCase(type)) {
+                if (tenant.getFatherEmail() != null && !tenant.getFatherEmail().isEmpty()) {
+                    notificationService.sendEmail(tenant.getFatherEmail(), subject, message);
+                }
+                if (tenant.getMotherEmail() != null && !tenant.getMotherEmail().isEmpty()) {
+                    notificationService.sendEmail(tenant.getMotherEmail(), subject, message);
+                }
+                if (tenant.getGuardianEmail() != null && !tenant.getGuardianEmail().isEmpty()) {
+                    notificationService.sendEmail(tenant.getGuardianEmail(), subject, message);
+                }
+            } else if ("sms".equalsIgnoreCase(type)) {
+                if (tenant.getFatherMobile() != null && !tenant.getFatherMobile().isEmpty()) {
+                    notificationService.sendSms(tenant.getFatherMobile(), message);
+                }
+                if (tenant.getMotherMobile() != null && !tenant.getMotherMobile().isEmpty()) {
+                    notificationService.sendSms(tenant.getMotherMobile(), message);
+                }
+                if (tenant.getGuardianMobile() != null && !tenant.getGuardianMobile().isEmpty()) {
+                    notificationService.sendSms(tenant.getGuardianMobile(), message);
+                }
+            }
+        }
     }
 }

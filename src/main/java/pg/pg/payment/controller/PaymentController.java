@@ -96,4 +96,13 @@ public class PaymentController {
                                 "Payment deleted successfully",
                                 null);
         }
+
+        @PostMapping("/{id}/share")
+        public SuccessResponse shareReceipt(
+                        @PathVariable Long id,
+                        @RequestParam String target,
+                        @RequestParam String type) {
+                paymentService.shareReceipt(id, target, type);
+                return new SuccessResponse("Receipt shared successfully", null);
+        }
 }

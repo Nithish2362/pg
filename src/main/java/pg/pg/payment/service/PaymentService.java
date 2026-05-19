@@ -25,7 +25,10 @@ public interface PaymentService {
 
     void generateMonthlyRent();
 
-    Page<PaymentDto> getAllPaginatedPayments(String searchTerm, String status, int page, int pageSize, String locationId, String buildingId);
+    Page<PaymentDto> getAllPaginatedPayments(String searchTerm, String status, int page, int pageSize,
+            String locationId, String buildingId);
 
     Map<String, Long> getCounts(String locationId, String buildingId);
+
+    void shareReceipt(Long id, String target, String type);
 }
